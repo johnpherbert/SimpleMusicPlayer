@@ -2,6 +2,7 @@ using GalaSoft.MvvmLight;
 using SimpleMusicPlayer.Models.FileTree;
 using System.Collections.ObjectModel;
 using System;
+using System.Linq;
 using SimpleMusicPlayer.Services;
 using System.IO;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using System.Windows.Input;
 using GalaSoft.MvvmLight.Ioc;
 using System.Windows.Forms;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace SimpleMusicPlayer.ViewModel
 {
@@ -31,11 +33,15 @@ namespace SimpleMusicPlayer.ViewModel
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
+        public PlaylistManager PlaylistManager { get; set; } = new PlaylistManager();
+
         public MusicPlayerService MusicPlayer { get; set; } = new MusicPlayerService();
 
         public ObservableCollection<Item> Items { get; set; }
 
-        private  Settings MusicPlayerSettings { get; set; }
+        private Settings MusicPlayerSettings { get; set; }
+
+        public string PlaylistName { get; set; }
 
         public ICommand OpenSettingsCommand { get; private set; }
 
@@ -51,6 +57,11 @@ namespace SimpleMusicPlayer.ViewModel
 
         public ICommand RemoveSongCommand { get; private set; }
 
+        public ICommand CreatePlayListCommand { get; private set; }
+
+        public ICommand DeletePlaylistCommand { get; private set; }
+
+
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
@@ -63,8 +74,11 @@ namespace SimpleMusicPlayer.ViewModel
             PauseSongCommand = new RelayCommand(() => MusicPlayer.PauseSong());
             StopSongCommand = new RelayCommand(() => MusicPlayer.StopSong());
 
+            CreatePlayListCommand = new RelayCommand<System.Windows.Controls.ListView>((songs) => CreatePlaylist(songs));
+            DeletePlaylistCommand = new RelayCommand<Playlist>((songs) => DeletePlaylist(songs));
+
             AddSongCommand = new RelayCommand<object>((songs) => AddSong(songs));
-            RemoveSongCommand = new RelayCommand<object>((playlist) => RemoveSong(playlist));
+            RemoveSongCommand = new RelayCommand<IList>((playlist) => RemoveSong(playlist));
 
             Items = new ObservableCollection<Item>();
 
@@ -74,6 +88,25 @@ namespace SimpleMusicPlayer.ViewModel
 
             // Load the inital directories based on the settings
             LoadInitalDirectories(MusicPlayerSettings.MusicFolders);
+
+            PlaylistManager.Load();
+        }
+
+        public void CreatePlaylist(System.Windows.Controls.ListView playlistview)
+        {
+            Playlist createpl = new Playlist();
+            createpl.Name = "New Playlist";
+
+            foreach(Song s in playlistview.Items)            
+                createpl.Songs.Add(s);
+
+            PlaylistManager.Playlists.Add(createpl);
+            PlaylistManager.Save();
+        }
+
+        public void DeletePlaylist(Playlist playlist)
+        {
+            PlaylistManager.Remove(playlist);
         }
 
         public void AddSong(object parameter)
@@ -88,11 +121,22 @@ namespace SimpleMusicPlayer.ViewModel
                 DirectoryItem di = parameter as DirectoryItem;
                 AddAllChildren(di);
             }
+            else if(parameter?.GetType() == typeof(Playlist))
+            {
+                Playlist pl = parameter as Playlist;
+                foreach (Song s in pl.Songs)
+                    MusicPlayer.CurrentPlaylist.Add(s);
+            }
         }
 
-        public void RemoveSong(object o)
+        public void RemoveSong(IList filestoremove)
         {
-
+            for(int x = filestoremove.Count - 1; x >= 0; x--)
+            {
+                Song songtoremove = filestoremove[x] as Song;
+                if (MusicPlayer.CurrentPlaylist.Contains(songtoremove))                
+                    MusicPlayer.CurrentPlaylist.Remove(songtoremove);                
+            }            
         }
 
         public void OpenSettingsWindow()

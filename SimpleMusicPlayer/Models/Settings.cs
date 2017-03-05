@@ -20,7 +20,7 @@ namespace SimpleMusicPlayer.Models
         public ObservableCollection<DirectoryItem> MusicFolders { get; set; }
 
         public Settings()
-        {
+        {            
             MusicFolders = new ObservableCollection<DirectoryItem>();
         }
 

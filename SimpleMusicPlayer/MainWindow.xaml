@@ -6,11 +6,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SimpleMusicPlayer"
         xmlns:DirTree="clr-namespace:SimpleMusicPlayer.Models.FileTree"
+        xmlns:Converters="clr-namespace:SimpleMusicPlayer.Converters"
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         mc:Ignorable="d"
-        Title="MainWindow" Height="750" Width="525">
+        Title="MainWindow" Height="500" Width="800">
     <Window.Resources>
+        <DataTemplate x:Key="PlayListTemplate">
+            <StackPanel Orientation="Horizontal">
+                <TextBox Height="22" Width="500" Text="{Binding Path=Path , Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button VerticalAlignment="Center" Margin="20,0,0,0" Height="20" Width="20" Command="{Binding DataContext.SearchPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">...</Button>
+                <Button VerticalAlignment="Center" Margin="20,0,0,0" Height="20" Width="20" Command="{Binding DataContext.RemoveMusicPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">-</Button>
+            </StackPanel>
+        </DataTemplate>
+
         <HierarchicalDataTemplate DataType="{x:Type DirTree:DirectoryItem}"
                                   ItemsSource="{Binding Path=Items}">
             <TextBlock Text="{Binding Path=Name}" ToolTip="{Binding Path=Path}" />
@@ -19,18 +28,22 @@
         <HierarchicalDataTemplate DataType="{x:Type DirTree:FileItem}">
             <TextBlock Text="{Binding Path=Name}" ToolTip="{Binding Path=Name}" />
         </HierarchicalDataTemplate>
-    </Window.Resources>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width=".4*" />
-            <ColumnDefinition Width=".8*" />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height=".1*" />
-            <RowDefinition Height=".9*" />
-        </Grid.RowDefinitions>
 
-        <Menu Width="Auto" Height="20">
+        <Style x:Key="TreeViewStyle" TargetType="{x:Type TreeView}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TreeView">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Converters:BooleanToVisibilityConverter x:Key="booltovisbility" />
+        <Converters:BooleanToFontWeightConverter x:Key="booltofontweight" />
+    </Window.Resources>
+    <DockPanel>
+        <Menu Height="20" DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Settings" HorizontalAlignment="Left" Width="140" Command="{Binding OpenSettingsCommand}" />
                 <!--MenuItem Header="E_xit" HorizontalAlignment="Left" Width="140" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=MusicWindow}" /-->
@@ -39,40 +52,114 @@
                 <MenuItem Header="_About" HorizontalAlignment="Left" Width="140"  />
             </MenuItem>
         </Menu>
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width=".4*" />
+                <ColumnDefinition Width=".8*" />
+            </Grid.ColumnDefinitions>
 
-        <TreeView x:Name="filetree" Grid.Column="0" Grid.Row="1" ItemsSource="{Binding Path=Items}" />
-
-        <Grid Grid.Row="1" Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="50" />
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Orientation="Vertical" Grid.Row="0">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Button Height="30" Width="30" Command="{Binding PlaySongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItem}">Play</Button>
-                    <Button Height="30" Width="30" Command="{Binding PauseSongCommand}">Pause</Button>
-                    <Button Height="30" Width="30" Command="{Binding StopSongCommand}">Stop</Button>
-                </StackPanel>
-                <Slider HorizontalAlignment="Center" VerticalAlignment="Center" Width="300" Minimum="0" Maximum="100" Value="{Binding Path=MusicPlayer.Volume}" />
-            </StackPanel>
-
-            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</Button>
-                <Button Width="50" Command="{Binding RemoveSongCommand}" CommandParameter="{Binding ElementName=currentplaylistview}">-</Button>
-            </StackPanel>
-            <ScrollViewer Grid.Row="2">
-                <ListView x:Name="currentplaylistview"  ItemsSource="{Binding MusicPlayer.CurrentPlaylist}">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Name" Width="200" DisplayMemberBinding="{Binding Path=Name}" />
-                        </GridView>
-                    </ListView.View>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".7*" />
+                    <RowDefinition Height=".3*" />
+                </Grid.RowDefinitions>
+                <ScrollViewer Grid.Row="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <TreeView x:Name="filetree"                 
+                          Style="{StaticResource TreeViewStyle}"
+                          PreviewMouseMove="filetree_PreviewMouseMove"
+                          ItemsSource="{Binding Path=Items}" />
+                </ScrollViewer>
+                <ListView x:Name="playlistview" Grid.Row="1"                           
+                          PreviewMouseMove="playlistview_PreviewMouseMove"
+                          ItemsSource="{Binding Path=PlaylistManager.Playlists}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="playlistgrid" HorizontalAlignment="Stretch" Height="25">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width=".9*" />
+                                    <ColumnDefinition Width=".1*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="playlisttextbox" Margin="5,0,5,0" VerticalAlignment="Center" Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" LostFocus="playlisttextbox_LostFocus" />
+                                <Button x:Name="removeplaylistbutton" Grid.Column="1" Height="20"
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                        Content="-"
+                                        Command="{Binding DataContext.DeletePlaylistCommand, ElementName=playlistview}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
                 </ListView>
-            </ScrollViewer>
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="100" />
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="30"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Vertical" Grid.Row="0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Button Height="30" Width="50" Command="{Binding PlaySongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItem}">Play</Button>
+                        <Button Height="30" Width="50" Command="{Binding PauseSongCommand}">Pause</Button>
+                        <Button Height="30" Width="50" Command="{Binding StopSongCommand}">Stop</Button>
+                    </StackPanel>
+                    <Slider HorizontalAlignment="Center" VerticalAlignment="Center" Width="300" Minimum="0" Maximum="100" Value="{Binding Path=MusicPlayer.Volume}" />
+                    <Label x:Name="CurrentSongLabel" HorizontalAlignment="Center" VerticalAlignment="Center" Content="{Binding Path=MusicPlayer.CurrentSong}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock x:Name="currenttime" Text="{Binding MusicPlayer.CurrentTime, StringFormat={}{0:mm}:{0:ss}, NotifyOnSourceUpdated=True}" />
+                        <TextBlock Text="/" />
+                        <TextBlock x:Name="currentsongduration" Text="{Binding MusicPlayer.CurrentSongLength, StringFormat={}{0:mm}:{0:ss}}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</Button>
+                    <Button Width="50" Command="{Binding RemoveSongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItems}">-</Button>
+                    <Button Width="50" Command="{Binding CreatePlayListCommand}" CommandParameter="{Binding ElementName=currentplaylistview}">PL</Button>
+                </StackPanel>
+
+                <ListView x:Name="currentplaylistview" Grid.Row="2"
+                              AllowDrop="True" 
+                              KeyDown="currentplaylistview_KeyDown"
+                              Drop="currentplaylistview_Drop" 
+                              DragEnter="currentplaylistview_DragEnter"
+                              ItemsSource="{Binding MusicPlayer.CurrentPlaylist}"
+                              MouseDoubleClick="currentplaylistview_MouseDoubleClick">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="{Binding Path=IsBeingPlayed, Converter={StaticResource booltovisbility}}">Play</Label>
+                                <TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="{Binding Path=IsBeingPlayed, Converter={StaticResource booltofontweight}}" Text="{Binding Path=Name}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    <!--ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name" Width="400" DisplayMemberBinding="{Binding Path=Name}" />
+                        </GridView>
+                    </ListView.View-->
+                </ListView>
+
+
+                <!--StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBox x:Name="playlistname" Height="20" Width="200" Text="{Binding PlaylistName}" />
+                    <Button Width="100" Command="{Binding CreatePlayListCommand}" CommandParameter="{Binding ElementName=currentplaylistview}">Make Playlist</Button>
+                </StackPanel-->
+            </Grid>
         </Grid>
-    </Grid>
+    </DockPanel>
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
             <i:InvokeCommandAction Command="{Binding ExitCommand}" />
