@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using SimpleMusicPlayer.Models.FileTree;
 using System.IO;
 using SimpleMusicPlayer.Models;
+using System.ComponentModel;
 
 namespace SimpleMusicPlayer.Services
 {
@@ -22,16 +23,54 @@ namespace SimpleMusicPlayer.Services
         /// <summary>
         /// The user specifically stopped the song.
         /// </summary>
-        UserStopped
+        UserStopped,
+
+        /// <summary>
+        /// The user paused the song
+        /// </summary>
+        UserPaused
     };
 
-    public class MusicPlayerService
+    public class MusicPlayerService : INotifyPropertyChanged
     {
         public PlayerStopped HowPlayerStopped = PlayerStopped.SongOver;
 
         public ObservableCollection<Song> CurrentPlaylist { get; set; } = new ObservableCollection<Song>();
 
-        public string CurrentSong { get; set; } = string.Empty;
+        private TimeSpan currentsonglength;
+        public TimeSpan CurrentSongLength
+        {
+            get { return currentsonglength; }
+
+            set
+            {
+                currentsonglength = value;
+                NotifyProperyChanged("CurrentSongLength");
+            }
+        }
+
+        public TimeSpan CurrentTime
+        {
+            get
+            {
+                if (SoundOut != null && SoundOut.WaveSource != null)
+                    return SoundOut.WaveSource.GetTime(SoundOut.WaveSource.Position);
+                else
+                    return new TimeSpan(0);
+            }
+        }
+
+        private string currentsong;
+        public string CurrentSong
+        {
+            get { return currentsong; }
+
+            set
+            {
+                currentsong = value;
+                NotifyProperyChanged("CurrentSong");
+            }
+        }
 
         public int PlayListIndex { get; set; } = 0;
 
@@ -43,19 +82,21 @@ namespace SimpleMusicPlayer.Services
             set
             {
                 volume = value;
-
+                
                 // The slider scale is 0-100 but the library scale is 0-1 so we need to * .01 to get the correct value.
-                if (SoundOut != null)
+                if (SoundOut?.WaveSource != null)
                     SoundOut.Volume = value * 0.01f;
             }
         }
 
         public ISoundOut SoundOut;
-        public IWaveSource WaveSource;        
+        public IWaveSource WaveSource;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public MusicPlayerService()
         {
-            Volume = 50f;
+            Volume = 20f;
 
             if (WasapiOut.IsSupportedOnCurrentPlatform)
                 SoundOut = new WasapiOut();
@@ -79,7 +120,8 @@ namespace SimpleMusicPlayer.Services
                 if (CurrentPlaylist.Count <= PlayListIndex)
                     PlayListIndex = 0;
 
-                PlaySong(CurrentPlaylist[PlayListIndex].Path);
+                if(PlayListIndex < CurrentPlaylist.Count)
+                    PlaySong(CurrentPlaylist[PlayListIndex].Path);
             }
 
             // User may have stopped it so we reset to song over.
@@ -88,40 +130,88 @@ namespace SimpleMusicPlayer.Services
 
         public void PlaySong(string path = "")
         {
-            string songtoplay = path;
-
-            if (string.IsNullOrEmpty(path))
-                songtoplay = CurrentPlaylist[0].Path;
-
-            // If the song was playing stop it before we start a new song.
-            if (SoundOut.PlaybackState == PlaybackState.Playing || SoundOut.PlaybackState == PlaybackState.Paused)
+            if (CurrentPlaylist.Count > 0)
             {
-                HowPlayerStopped = PlayerStopped.UserStopped;
-                SoundOut.Stop();
-            }
-            
-            WaveSource = CSCore.Codecs.CodecFactory.Instance.GetCodec(songtoplay);
-            SoundOut.Initialize(WaveSource);
+                string songtoplay = path;
 
-            // Volume resets on each play so we need to set it to the proper level again.
-            SoundOut.Volume = volume * 0.01f;
-            CurrentSong = new FileInfo(songtoplay).Name;
-            SoundOut.Play();
+                if (string.IsNullOrEmpty(path))
+                    songtoplay = CurrentPlaylist[0].Path;
+
+                PlayListIndex = GetPlaylistIndexFromPath(songtoplay);
+                
+
+                // If the song was playing stop it before we start a new song.
+                if (SoundOut.PlaybackState == PlaybackState.Playing || SoundOut.PlaybackState == PlaybackState.Paused)
+                {
+                    HowPlayerStopped = PlayerStopped.UserStopped;
+                    SoundOut.Stop();
+                }
+
+                WaveSource = CSCore.Codecs.CodecFactory.Instance.GetCodec(songtoplay);
+                SoundOut.Initialize(WaveSource);                
+
+                // Volume resets on each play so we need to set it to the proper level again.
+                SoundOut.Volume = volume * 0.01f;
+                CurrentSong = new FileInfo(songtoplay).Name;
+
+                SetSongAsPlayed(PlayListIndex);
+                CurrentSongLength = SoundOut.WaveSource.GetTime(SoundOut.WaveSource.Length);
+                SoundOut.Play();                
+            }
+        }
+
+        public void PlayRandomSong()
+        {
+
         }
 
         public void PauseSong()
         {
-            SoundOut?.Pause();            
+            HowPlayerStopped = PlayerStopped.UserPaused;
+            SoundOut?.Pause();                        
         }
 
         public void StopSong()
         {
+            HowPlayerStopped = PlayerStopped.UserStopped;
             SoundOut?.Stop();            
         }
 
         public void Cleanup()
         {
             SoundOut.Stopped -= SoundOut_Stopped;
+        }
+
+        public void NotifyProperyChanged(string propertyname)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        }
+
+        private int GetPlaylistIndexFromPath(string path)
+        {
+            int returnVal = -1;
+
+            for (int i = 0; i < CurrentPlaylist.Count; i++)
+            {
+                if (path == CurrentPlaylist[i].Path)
+                {
+                    returnVal = i;
+                    break;
+                }
+            }            
+
+            return returnVal;
+        }
+
+        private void SetSongAsPlayed(int playlistindex)
+        {
+            for (int i = 0; i < CurrentPlaylist.Count; i++)
+            {
+                if (i == playlistindex)
+                    CurrentPlaylist[i].IsBeingPlayed = true;
+                else
+                    CurrentPlaylist[i].IsBeingPlayed = false;
+            }
         }
     }
 }

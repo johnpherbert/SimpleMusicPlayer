@@ -2,7 +2,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Styles\SettingsStyle.xaml" />
+                <!--ResourceDictionary Source="Styles\SimpleMusicStyles.xaml" /-->
             </ResourceDictionary.MergedDictionaries>
 
             <vm:ViewModelLocator x:Key="Locator" d:IsDataSource="True" xmlns:vm="clr-namespace:SimpleMusicPlayer.ViewModel" />
