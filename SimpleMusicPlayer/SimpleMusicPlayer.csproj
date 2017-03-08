@@ -85,6 +85,8 @@
     </ApplicationDefinition>
     <Compile Include="Converters\BooleanToFontWeightConverter.cs" />
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Converters\PlayEnabledConverter.cs" />
+    <Compile Include="Converters\PlayPauseVisiblityConverter.cs" />
     <Compile Include="Models\FileTree\DirectoryItem.cs" />
     <Compile Include="Models\FileTree\FileItem.cs" />
     <Compile Include="Models\FileTree\Item.cs" />
@@ -148,6 +150,28 @@
   <ItemGroup>
     <Folder Include="Configuration\" />
     <Folder Include="Styles\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Pictures\BackButtonDisabled.png" />
+    <Resource Include="Pictures\BackButtonMouseDown.png" />
+    <Resource Include="Pictures\BackButtonMouseOver.png" />
+    <Resource Include="Pictures\BackButtonNormal.png" />
+    <Resource Include="Pictures\CreatePlaylistButtonDisabled.png" />
+    <Resource Include="Pictures\CreatePlaylistButtonMouseDown.png" />
+    <Resource Include="Pictures\CreatePlaylistButtonMouseOver.png" />
+    <Resource Include="Pictures\CreatePlaylistButtonNormal.png" />
+    <Resource Include="Pictures\ForwardButtonDisabled.png" />
+    <Resource Include="Pictures\ForwardButtonMouseDown.png" />
+    <Resource Include="Pictures\ForwardButtonMouseOver.png" />
+    <Resource Include="Pictures\ForwardButtonNormal.png" />
+    <Resource Include="Pictures\PauseButtonDisabled.png" />
+    <Resource Include="Pictures\PauseButtonMouseDown.png" />
+    <Resource Include="Pictures\PauseButtonMouseOver.png" />
+    <Resource Include="Pictures\PauseButtonNormal.png" />
+    <Resource Include="Pictures\PlayButtonDisabled.png" />
+    <Resource Include="Pictures\PlayButtonMouseDown.png" />
+    <Resource Include="Pictures\PlayButtonMouseOver.png" />
+    <Resource Include="Pictures\PlayButtonNormal.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -41,6 +41,8 @@
 
         <Converters:BooleanToVisibilityConverter x:Key="booltovisbility" />
         <Converters:BooleanToFontWeightConverter x:Key="booltofontweight" />
+        <Converters:PlayPauseVisiblityConverter x:Key="playpausevisibility" />
+        <Converters:PlayEnabledConverter x:Key="playenabled" />
     </Window.Resources>
     <DockPanel>
         <Menu Height="20" DockPanel.Dock="Top">
@@ -52,7 +54,7 @@
                 <MenuItem Header="_About" HorizontalAlignment="Left" Width="140"  />
             </MenuItem>
         </Menu>
-        
+
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width=".4*" />
@@ -65,14 +67,14 @@
                     <RowDefinition Height=".3*" />
                 </Grid.RowDefinitions>
                 <ScrollViewer Grid.Row="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                <TreeView x:Name="filetree"                 
+                    <TreeView x:Name="filetree"                 
                           Style="{StaticResource TreeViewStyle}"
                           PreviewMouseMove="filetree_PreviewMouseMove"
                           ItemsSource="{Binding Path=Items}" />
                 </ScrollViewer>
-                <ListView x:Name="playlistview" Grid.Row="1"                           
+                <ListView x:Name="playlistview" Grid.Row="1"
                           PreviewMouseMove="playlistview_PreviewMouseMove"
-                          ItemsSource="{Binding Path=PlaylistManager.Playlists}">
+                          ItemsSource="{Binding Path=PlaylistManager.Playlists}" >
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid x:Name="playlistgrid" HorizontalAlignment="Stretch" Height="25">
@@ -100,16 +102,131 @@
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="100" />
-                    <RowDefinition Height="30"/>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="30"/>
                 </Grid.RowDefinitions>
 
                 <StackPanel Orientation="Vertical" Grid.Row="0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Button Height="30" Width="50" Command="{Binding PlaySongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItem}">Play</Button>
-                        <Button Height="30" Width="50" Command="{Binding PauseSongCommand}">Pause</Button>
-                        <Button Height="30" Width="50" Command="{Binding StopSongCommand}">Stop</Button>
+                        <!--#region Controller Commands -->
+                        <Button x:Name="GoBackButton" Width="50" Command="{Binding PlayPreviousSongCommand}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid>
+                                        <Image x:Name="backbuttonimage" Source="Pictures/BackButtonNormal.png" RenderOptions.BitmapScalingMode="Fant" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <!-- The Back Button Triggers -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="backbuttonimage" Property="Source" Value="Pictures/BackButtonMouseOver.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="backbuttonimage" Property="Source" Value="Pictures/BackButtonMouseDown.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="backbuttonimage" Property="Source" Value="Pictures/BackButtonDisabled.png" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.IsEnabled>
+                                <MultiBinding Converter="{StaticResource playenabled}" ConverterParameter="Min">
+                                    <Binding Path="MusicPlayer.PlayListIndex" />
+                                    <Binding Path="MusicPlayer.CurrentPlaylist.Count" />
+                                </MultiBinding>
+                            </Button.IsEnabled>
+                        </Button>
+                        <Button Height="50" Width="50" Grid.Column="1" 
+                                Command="{Binding PlaySongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItem}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid>
+                                        <Image x:Name="playbuttonimage" Source="Pictures/PlayButtonNormal.png" RenderOptions.BitmapScalingMode="Fant"
+                                               Visibility="{Binding Path=MusicPlayer.IsPlayingSong, Converter={StaticResource playpausevisibility}, ConverterParameter=play}" />
+                                        <Image x:Name="pausebuttonimage" Source="Pictures/PauseButtonNormal.png" RenderOptions.BitmapScalingMode="Fant"
+                                               Visibility="{Binding Path=MusicPlayer.IsPlayingSong, Converter={StaticResource playpausevisibility}, ConverterParameter=pause}"/>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <!-- The Play Button Triggers -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="playbuttonimage" Property="Source" Value="Pictures/PlayButtonMouseOver.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="playbuttonimage" Property="Source" Value="Pictures/PlayButtonMouseDown.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="playbuttonimage" Property="Source" Value="Pictures/PlayButtonDisabled.png" />
+                                        </Trigger>
+
+                                        <!-- The Pause Button Triggers -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="pausebuttonimage" Property="Source" Value="Pictures/PauseButtonMouseOver.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="pausebuttonimage" Property="Source" Value="Pictures/PauseButtonMouseDown.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="pausebuttonimage" Property="Source" Value="Pictures/PauseButtonDisabled.png" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.IsEnabled>
+                                <MultiBinding Converter="{StaticResource playenabled}" ConverterParameter="Play">
+                                    <Binding Path="MusicPlayer.PlayListIndex" />
+                                    <Binding Path="MusicPlayer.CurrentPlaylist.Count" />
+                                </MultiBinding>
+                            </Button.IsEnabled>
+                        </Button>
+                        <Button x:Name="GoForwardButton" Width="50" Command="{Binding PlayNextSongCommand}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid>
+                                        <Image x:Name="forwardbuttonimage" Source="Pictures/ForwardButtonNormal.png" RenderOptions.BitmapScalingMode="Fant" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <!-- The Forward Button Triggers -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="forwardbuttonimage" Property="Source" Value="Pictures/ForwardButtonMouseOver.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="forwardbuttonimage" Property="Source" Value="Pictures/ForwardButtonMouseDown.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="forwardbuttonimage" Property="Source" Value="Pictures/ForwardButtonDisabled.png" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.IsEnabled>
+                                <MultiBinding Converter="{StaticResource playenabled}" ConverterParameter="Max">
+                                    <Binding Path="MusicPlayer.PlayListIndex" />
+                                    <Binding Path="MusicPlayer.CurrentPlaylist.Count" />
+                                </MultiBinding>
+                            </Button.IsEnabled>
+                        </Button >
+                        <Button Width="40" Command="{Binding CreatePlayListCommand}" CommandParameter="{Binding ElementName=currentplaylistview}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid>
+                                        <Image x:Name="createplaylistimage" Source="Pictures/CreatePlaylistButtonNormal.png" RenderOptions.BitmapScalingMode="Fant" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <!-- The Forward Button Triggers -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="createplaylistimage" Property="Source" Value="Pictures/CreatePlaylistButtonMouseOver.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="createplaylistimage" Property="Source" Value="Pictures/CreatePlaylistButtonMouseDown.png" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="createplaylistimage" Property="Source" Value="Pictures/CreatePlaylistButtonDisabled.png" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <!--#endregion-->
                     </StackPanel>
                     <Slider HorizontalAlignment="Center" VerticalAlignment="Center" Width="300" Minimum="0" Maximum="100" Value="{Binding Path=MusicPlayer.Volume}" />
                     <Label x:Name="CurrentSongLabel" HorizontalAlignment="Center" VerticalAlignment="Center" Content="{Binding Path=MusicPlayer.CurrentSong}" />
@@ -120,13 +237,13 @@
                     </StackPanel>
                 </StackPanel>
 
-                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</Button>
-                    <Button Width="50" Command="{Binding RemoveSongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItems}">-</Button>
-                    <Button Width="50" Command="{Binding CreatePlayListCommand}" CommandParameter="{Binding ElementName=currentplaylistview}">PL</Button>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                    <!--Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</>
+                    <Button Width="50" Command="{Binding RemoveSongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItems}">-</Button-->
+
                 </StackPanel>
 
-                <ListView x:Name="currentplaylistview" Grid.Row="2"
+                <ListView x:Name="currentplaylistview" Grid.Row="1" Grid.Column="0"
                               AllowDrop="True" 
                               KeyDown="currentplaylistview_KeyDown"
                               Drop="currentplaylistview_Drop" 

@@ -49,6 +49,10 @@ namespace SimpleMusicPlayer.ViewModel
 
         public ICommand PlaySongCommand { get; private set; }
 
+        public ICommand PlayPreviousSongCommand { get; private set; }
+
+        public ICommand PlayNextSongCommand { get; private set; }
+
         public ICommand PauseSongCommand { get; private set; }
 
         public ICommand StopSongCommand { get; private set; }
@@ -71,6 +75,9 @@ namespace SimpleMusicPlayer.ViewModel
             ExitCommand = new RelayCommand(() => Exit());
 
             PlaySongCommand = new RelayCommand<Song>((song) => MusicPlayer.PlaySong(song?.Path));
+            PlayNextSongCommand = new RelayCommand(() => MusicPlayer.PlayNextSong());
+            PlayPreviousSongCommand = new RelayCommand(() => MusicPlayer.PlayPreviousSong());
+
             PauseSongCommand = new RelayCommand(() => MusicPlayer.PauseSong());
             StopSongCommand = new RelayCommand(() => MusicPlayer.StopSong());
 
@@ -83,7 +90,7 @@ namespace SimpleMusicPlayer.ViewModel
             Items = new ObservableCollection<Item>();
 
             // Load Music Player Settings
-            MusicPlayerSettings = new Settings();            
+            MusicPlayerSettings = new Settings();
             MusicPlayerSettings.Load();
 
             // Load the inital directories based on the settings
@@ -97,7 +104,7 @@ namespace SimpleMusicPlayer.ViewModel
             Playlist createpl = new Playlist();
             createpl.Name = "New Playlist";
 
-            foreach(Song s in playlistview.Items)            
+            foreach (Song s in playlistview.Items)
                 createpl.Songs.Add(s);
 
             PlaylistManager.Playlists.Add(createpl);
@@ -121,7 +128,7 @@ namespace SimpleMusicPlayer.ViewModel
                 DirectoryItem di = parameter as DirectoryItem;
                 AddAllChildren(di);
             }
-            else if(parameter?.GetType() == typeof(Playlist))
+            else if (parameter?.GetType() == typeof(Playlist))
             {
                 Playlist pl = parameter as Playlist;
                 foreach (Song s in pl.Songs)
@@ -131,12 +138,12 @@ namespace SimpleMusicPlayer.ViewModel
 
         public void RemoveSong(IList filestoremove)
         {
-            for(int x = filestoremove.Count - 1; x >= 0; x--)
+            for (int x = filestoremove.Count - 1; x >= 0; x--)
             {
                 Song songtoremove = filestoremove[x] as Song;
-                if (MusicPlayer.CurrentPlaylist.Contains(songtoremove))                
-                    MusicPlayer.CurrentPlaylist.Remove(songtoremove);                
-            }            
+                if (MusicPlayer.CurrentPlaylist.Contains(songtoremove))
+                    MusicPlayer.CurrentPlaylist.Remove(songtoremove);
+            }
         }
 
         public void OpenSettingsWindow()
@@ -161,9 +168,9 @@ namespace SimpleMusicPlayer.ViewModel
 
         public async void LoadInitalDirectories(IEnumerable paths)
         {
-            Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);            
+            Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
             RaisePropertyChanged("Items");
-       }
+        }
 
         /// Add all children from the folder.  Allows you to load a entire collection.
         /// </summary>

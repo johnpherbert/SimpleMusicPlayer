@@ -31,11 +31,43 @@ namespace SimpleMusicPlayer.Services
         UserPaused
     };
 
+    public enum PlayerStatus
+    {
+        /// <summary>
+        /// The player is stopped
+        /// </summary>
+        Stopped,
+
+        /// <summary>
+        /// The player is playing a song
+        /// </summary>
+        Playing,
+
+        /// <summary>
+        /// The player is paused
+        /// </summary>
+        Paused
+    };
+
     public class MusicPlayerService : INotifyPropertyChanged
     {
         public PlayerStopped HowPlayerStopped = PlayerStopped.SongOver;
 
+        public PlayerStatus MusicPlayerStatus = PlayerStatus.Stopped;
+
         public ObservableCollection<Song> CurrentPlaylist { get; set; } = new ObservableCollection<Song>();
+
+        private bool isplayingsong;
+        public bool IsPlayingSong
+        {
+            get { return isplayingsong; }
+
+            set
+            {
+                isplayingsong = value;
+                NotifyProperyChanged("IsPlayingSong");
+            }
+        }
 
         private TimeSpan currentsonglength;
         public TimeSpan CurrentSongLength
@@ -72,7 +104,20 @@ namespace SimpleMusicPlayer.Services
             }
         }
 
-        public int PlayListIndex { get; set; } = 0;
+        private int playlistindex;
+        public int PlayListIndex
+        {
+            get
+            {
+                return playlistindex;
+            }
+
+            set
+            {
+                playlistindex = value;
+                NotifyProperyChanged("PlayListIndex");
+            }
+        }
 
         private float volume;
         public float Volume
@@ -82,7 +127,7 @@ namespace SimpleMusicPlayer.Services
             set
             {
                 volume = value;
-                
+
                 // The slider scale is 0-100 but the library scale is 0-1 so we need to * .01 to get the correct value.
                 if (SoundOut?.WaveSource != null)
                     SoundOut.Volume = value * 0.01f;
@@ -97,6 +142,9 @@ namespace SimpleMusicPlayer.Services
         public MusicPlayerService()
         {
             Volume = 20f;
+
+            PlayListIndex = 0;
+            IsPlayingSong = false;
 
             if (WasapiOut.IsSupportedOnCurrentPlatform)
                 SoundOut = new WasapiOut();
@@ -120,7 +168,7 @@ namespace SimpleMusicPlayer.Services
                 if (CurrentPlaylist.Count <= PlayListIndex)
                     PlayListIndex = 0;
 
-                if(PlayListIndex < CurrentPlaylist.Count)
+                if (PlayListIndex < CurrentPlaylist.Count)
                     PlaySong(CurrentPlaylist[PlayListIndex].Path);
             }
 
@@ -128,8 +176,9 @@ namespace SimpleMusicPlayer.Services
             HowPlayerStopped = PlayerStopped.SongOver;
         }
 
-        public void PlaySong(string path = "")
+        public void PlayNewSong(string path = "")
         {
+            // If we have selected a diffrent song we should play it.                
             if (CurrentPlaylist.Count > 0)
             {
                 string songtoplay = path;
@@ -138,7 +187,7 @@ namespace SimpleMusicPlayer.Services
                     songtoplay = CurrentPlaylist[0].Path;
 
                 PlayListIndex = GetPlaylistIndexFromPath(songtoplay);
-                
+
 
                 // If the song was playing stop it before we start a new song.
                 if (SoundOut.PlaybackState == PlaybackState.Playing || SoundOut.PlaybackState == PlaybackState.Paused)
@@ -148,7 +197,7 @@ namespace SimpleMusicPlayer.Services
                 }
 
                 WaveSource = CSCore.Codecs.CodecFactory.Instance.GetCodec(songtoplay);
-                SoundOut.Initialize(WaveSource);                
+                SoundOut.Initialize(WaveSource);
 
                 // Volume resets on each play so we need to set it to the proper level again.
                 SoundOut.Volume = volume * 0.01f;
@@ -156,7 +205,47 @@ namespace SimpleMusicPlayer.Services
 
                 SetSongAsPlayed(PlayListIndex);
                 CurrentSongLength = SoundOut.WaveSource.GetTime(SoundOut.WaveSource.Length);
-                SoundOut.Play();                
+                IsPlayingSong = true;
+                MusicPlayerStatus = PlayerStatus.Playing;
+                SoundOut.Play();
+            }
+        }
+
+        public void PlaySong(string path = "")
+        {
+            // If the song is playing and we are on the same song we need to pause
+            if (MusicPlayerStatus == PlayerStatus.Playing)
+            {
+                PauseSong();
+            }
+            // If we are paused and we are on the same song Resume the song.
+            else if (MusicPlayerStatus == PlayerStatus.Paused)
+            {
+                ResumeSong();
+            }
+            else
+            {
+                PlayNewSong(path);
+            }
+        }
+
+        public void PlayNextSong()
+        {
+            if (PlayListIndex < CurrentPlaylist.Count - 1)
+            {
+                // We dont want to adjust the index until we play the song otherwise we will have problems with pausing
+                int tempindex = PlayListIndex + 1;
+                PlayNewSong(CurrentPlaylist?[tempindex].Path);
+            }
+        }
+
+        public void PlayPreviousSong()
+        {
+            if (PlayListIndex > 0)
+            {
+                // We dont want to adjust the index until we play the song otherwise we will have problems with pausing
+                int tempindex = PlayListIndex - 1;
+                PlayNewSong(CurrentPlaylist?[tempindex].Path);
             }
         }
 
@@ -165,16 +254,27 @@ namespace SimpleMusicPlayer.Services
 
         }
 
+        public void ResumeSong()
+        {
+            IsPlayingSong = true;
+            MusicPlayerStatus = PlayerStatus.Playing;
+            SoundOut?.Resume();
+        }
+
         public void PauseSong()
         {
             HowPlayerStopped = PlayerStopped.UserPaused;
-            SoundOut?.Pause();                        
+            MusicPlayerStatus = PlayerStatus.Paused;
+            IsPlayingSong = false;
+            SoundOut?.Pause();
         }
 
         public void StopSong()
         {
             HowPlayerStopped = PlayerStopped.UserStopped;
-            SoundOut?.Stop();            
+            MusicPlayerStatus = PlayerStatus.Stopped;
+            IsPlayingSong = false;
+            SoundOut?.Stop();
         }
 
         public void Cleanup()
@@ -198,7 +298,7 @@ namespace SimpleMusicPlayer.Services
                     returnVal = i;
                     break;
                 }
-            }            
+            }
 
             return returnVal;
         }

@@ -5,12 +5,16 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Script.Serialization;
 
 namespace SimpleMusicPlayer.Models
 {
+
     public class Song : Item, INotifyPropertyChanged
     {
         private bool isbeingplayed;
+
+        [ScriptIgnore]
         public bool IsBeingPlayed
         {
             get { return isbeingplayed; }

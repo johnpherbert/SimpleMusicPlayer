@@ -29,16 +29,16 @@ namespace SimpleMusicPlayer
         }
 
         private void currentplaylistview_Drop(object sender, DragEventArgs e)
-        {            
+        {
             if (e.Data.GetDataPresent(typeof(DirectoryItem)))
             {
                 ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(DirectoryItem)));
             }
-            else if(e.Data.GetDataPresent(typeof(FileItem)))
+            else if (e.Data.GetDataPresent(typeof(FileItem)))
             {
                 ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(FileItem)));
-            }                
-            else if(e.Data.GetDataPresent(typeof(Playlist)))
+            }
+            else if (e.Data.GetDataPresent(typeof(Playlist)))
             {
                 ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(Playlist)));
             }
@@ -52,7 +52,7 @@ namespace SimpleMusicPlayer
         private void filetree_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             TreeView tv = (TreeView)sender;
-            if (tv?.SelectedItem != null &&  e.LeftButton == MouseButtonState.Pressed)
+            if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
                 DragDrop.DoDragDrop(filetree, tv.SelectedItem, DragDropEffects.Copy);
         }
 
@@ -67,7 +67,7 @@ namespace SimpleMusicPlayer
 
         private void currentplaylistview_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.Key == Key.Delete && e.IsDown == true)
+            if (e.Key == Key.Delete && e.IsDown == true)
             {
                 ((MainViewModel)DataContext).RemoveSong(currentplaylistview.SelectedItems);
             }
@@ -76,7 +76,7 @@ namespace SimpleMusicPlayer
         private void currentplaylistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             Song s = currentplaylistview.SelectedItem as Song;
-            ((MainViewModel)DataContext).MusicPlayer.PlaySong(s.Path);
+            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(s.Path);
         }
 
         private void playlisttextbox_LostFocus(object sender, RoutedEventArgs e)
