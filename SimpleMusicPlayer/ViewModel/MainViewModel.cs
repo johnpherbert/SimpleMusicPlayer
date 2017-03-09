@@ -39,6 +39,8 @@ namespace SimpleMusicPlayer.ViewModel
 
         public ObservableCollection<Item> Items { get; set; }
 
+        public ObservableCollection<Song> SongItems { get; set; }
+
         private Settings MusicPlayerSettings { get; set; }
 
         public string PlaylistName { get; set; }
@@ -70,7 +72,7 @@ namespace SimpleMusicPlayer.ViewModel
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
         public MainViewModel()
-        {
+        {            
             OpenSettingsCommand = new RelayCommand(() => OpenSettingsWindow());
             ExitCommand = new RelayCommand(() => Exit());
 
@@ -118,7 +120,12 @@ namespace SimpleMusicPlayer.ViewModel
 
         public void AddSong(object parameter)
         {
-            if (parameter?.GetType() == typeof(FileItem))
+            if (parameter?.GetType() == typeof(Song))
+            {
+                Song fi = parameter as Song;
+                MusicPlayer.CurrentPlaylist.Add(fi);
+            }
+            else if (parameter?.GetType() == typeof(FileItem))
             {
                 FileItem fi = parameter as FileItem;
                 MusicPlayer.CurrentPlaylist.Add(new Song() { Name = fi.Name, Path = fi.Path });
@@ -168,8 +175,11 @@ namespace SimpleMusicPlayer.ViewModel
 
         public async void LoadInitalDirectories(IEnumerable paths)
         {
-            Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
-            RaisePropertyChanged("Items");
+            // Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
+
+            SongItems = await DirectoryTreeService.ReadSongsAsync(paths);
+            // RaisePropertyChanged("Items");
+            RaisePropertyChanged("SongItems");
         }
 
         /// Add all children from the folder.  Allows you to load a entire collection.

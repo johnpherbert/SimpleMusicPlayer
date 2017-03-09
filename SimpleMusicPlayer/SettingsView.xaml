@@ -26,7 +26,9 @@
 
         <Label Grid.Column="0">Settings</Label>
 
-        <ListView x:Name="musicfolderlistview" Grid.Row="1" ItemsSource="{Binding Path=TempPlayerSettings.MusicFolders}" >
+        <ListView x:Name="musicfolderlistview" Grid.Row="1" 
+                  ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
+                  ItemsSource="{Binding Path=TempPlayerSettings.MusicFolders}" >
             <ListView.View>
                 <GridView>
                     <GridViewColumn CellTemplate="{StaticResource MusicFolderTemplate}" />

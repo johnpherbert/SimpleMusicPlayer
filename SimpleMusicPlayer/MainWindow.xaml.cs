@@ -1,20 +1,9 @@
 ﻿using SimpleMusicPlayer.Models;
 using SimpleMusicPlayer.Models.FileTree;
 using SimpleMusicPlayer.ViewModel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace SimpleMusicPlayer
 {
@@ -28,9 +17,13 @@ namespace SimpleMusicPlayer
             InitializeComponent();
         }
 
-        private void currentplaylistview_Drop(object sender, DragEventArgs e)
+        private void Currentplaylistview_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(typeof(DirectoryItem)))
+            if(e.Data.GetDataPresent(typeof(Song)))
+            {
+                ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(Song)));
+            }
+            else if (e.Data.GetDataPresent(typeof(DirectoryItem)))
             {
                 ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(DirectoryItem)));
             }
@@ -44,19 +37,14 @@ namespace SimpleMusicPlayer
             }
         }
 
-        private void currentplaylistview_DragEnter(object sender, DragEventArgs e)
-        {
+        // private void Filetree_PreviewMouseMove(object sender, MouseEventArgs e)
+        // {
+        //     TreeView tv = (TreeView)sender;
+        //     if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
+        //         DragDrop.DoDragDrop(filetree, tv.SelectedItem, DragDropEffects.Copy);
+        // }
 
-        }
-
-        private void filetree_PreviewMouseMove(object sender, MouseEventArgs e)
-        {
-            TreeView tv = (TreeView)sender;
-            if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
-                DragDrop.DoDragDrop(filetree, tv.SelectedItem, DragDropEffects.Copy);
-        }
-
-        private void playlistview_PreviewMouseMove(object sender, MouseEventArgs e)
+        private void Playlistview_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             // TODO allow multiple playlists to be added at once
 
@@ -65,7 +53,7 @@ namespace SimpleMusicPlayer
                 DragDrop.DoDragDrop(playlistview, tv.SelectedItem, DragDropEffects.Copy);
         }
 
-        private void currentplaylistview_KeyDown(object sender, KeyEventArgs e)
+        private void Currentplaylistview_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Delete && e.IsDown == true)
             {
@@ -73,15 +61,31 @@ namespace SimpleMusicPlayer
             }
         }
 
-        private void currentplaylistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void Currentplaylistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             Song s = currentplaylistview.SelectedItem as Song;
             ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(s.Path);
         }
 
-        private void playlisttextbox_LostFocus(object sender, RoutedEventArgs e)
+        private void Playlisttextbox_LostFocus(object sender, RoutedEventArgs e)
         {
             ((MainViewModel)DataContext).PlaylistManager.Save();
         }
+
+        private void Filesongslistview_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            ListView tv = (ListView)sender;
+            if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
+                DragDrop.DoDragDrop(filesongslistview, tv.SelectedItem, DragDropEffects.Copy);
+        }
+
+        private void Filesongslistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ListView tv = (ListView)sender;
+            Song song = tv.SelectedItem as Song;
+            ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
+            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song.Path);
+        }
+        
     }
 }

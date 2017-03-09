@@ -169,7 +169,7 @@ namespace SimpleMusicPlayer.Services
                     PlayListIndex = 0;
 
                 if (PlayListIndex < CurrentPlaylist.Count)
-                    PlaySong(CurrentPlaylist[PlayListIndex].Path);
+                    PlayNewSong(CurrentPlaylist[PlayListIndex].Path);
             }
 
             // User may have stopped it so we reset to song over.

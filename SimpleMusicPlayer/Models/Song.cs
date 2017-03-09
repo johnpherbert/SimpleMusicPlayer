@@ -25,6 +25,18 @@ namespace SimpleMusicPlayer.Models
             }
         }
 
+        private SongInfo info;
+        [ScriptIgnore]
+        public SongInfo Info
+        {
+            get { return info; }
+            set
+            {
+                info = value;
+                NotifyProperyChanged("Info");
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public void NotifyProperyChanged(string propertyname)
