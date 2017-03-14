@@ -72,7 +72,11 @@ namespace SimpleMusicPlayer.ViewModel
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
         public MainViewModel()
-        {            
+        {
+
+            // string path = @"E:\Music\Ace of Base\Flowers\17 - Cruel Summer.mp3";
+            // MusicTagReaderService.ReadSong(path);
+
             OpenSettingsCommand = new RelayCommand(() => OpenSettingsWindow());
             ExitCommand = new RelayCommand(() => Exit());
 
@@ -120,7 +124,22 @@ namespace SimpleMusicPlayer.ViewModel
 
         public void AddSong(object parameter)
         {
-            if (parameter?.GetType() == typeof(Song))
+            if(parameter?.GetType() == typeof(List<Song>))
+            {
+                List<Song> songlist = parameter as List<Song>;
+                foreach (Song s in songlist)
+                    MusicPlayer.CurrentPlaylist.Add(s);
+            }
+            else if (parameter?.GetType() == typeof(List<Playlist>))
+            {
+                List<Playlist> playlists = parameter as List<Playlist>;
+                foreach (Playlist pl in playlists)
+                {
+                    foreach(Song s in pl.Songs)
+                        MusicPlayer.CurrentPlaylist.Add(s);
+                }                    
+            }
+            else if (parameter?.GetType() == typeof(Song))
             {
                 Song fi = parameter as Song;
                 MusicPlayer.CurrentPlaylist.Add(fi);
@@ -174,6 +193,15 @@ namespace SimpleMusicPlayer.ViewModel
         }
 
         public async void LoadInitalDirectories(IEnumerable paths)
+        {
+            // Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
+
+            SongItems = await DirectoryTreeService.ReadSongsAsync(paths);
+            // RaisePropertyChanged("Items");
+            RaisePropertyChanged("SongItems");
+        }
+
+        public async void UpdateSongInfo(IEnumerable paths)
         {
             // Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
 

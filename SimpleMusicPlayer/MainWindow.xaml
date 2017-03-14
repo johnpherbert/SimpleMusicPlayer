@@ -4,6 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:custom="clr-namespace:SimpleMusicPlayer.CustomControls"
         xmlns:local="clr-namespace:SimpleMusicPlayer"
         xmlns:DirTree="clr-namespace:SimpleMusicPlayer.Models.FileTree"
         xmlns:Converters="clr-namespace:SimpleMusicPlayer.Converters"
@@ -92,7 +93,7 @@
                     </ListView.View-->
                 </ListView>
                 
-                <ListView x:Name="playlistview" Grid.Row="1"
+                <custom:ListViewMultiSelect x:Name="playlistview" Grid.Row="1"
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
                           PreviewMouseMove="Playlistview_PreviewMouseMove"
                           ItemsSource="{Binding Path=PlaylistManager.Playlists}" >
@@ -117,7 +118,7 @@
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         </Style>
                     </ListView.ItemContainerStyle-->
-                </ListView>
+                </custom:ListViewMultiSelect>
             </Grid>
 
             <Grid Grid.Column="1">
@@ -265,7 +266,7 @@
                           ItemsSource="{Binding Path=Items}" />
                 </ScrollViewer-->
 
-                <ListView x:Name="filesongslistview" Grid.Row="1" 
+                <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"             
                           PreviewMouseMove="Filesongslistview_PreviewMouseMove"
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
                           ItemsSource="{Binding SongItems}"
@@ -284,7 +285,7 @@
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
-                </ListView>
+                </custom:ListViewMultiSelect>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                     <!--Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</>

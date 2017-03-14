@@ -1,6 +1,8 @@
 ﻿using SimpleMusicPlayer.Models;
 using SimpleMusicPlayer.Models.FileTree;
 using SimpleMusicPlayer.ViewModel;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,6 +14,8 @@ namespace SimpleMusicPlayer
     /// </summary>
     public partial class MainWindow : Window
     {
+        List<object> PreviouslySelectedSongs = new List<object>();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -19,9 +23,13 @@ namespace SimpleMusicPlayer
 
         private void Currentplaylistview_Drop(object sender, DragEventArgs e)
         {
-            if(e.Data.GetDataPresent(typeof(Song)))
+            if (e.Data.GetDataPresent(typeof(List<Song>)))
             {
-                ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(Song)));
+                ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(List<Song>)));
+            }
+            if (e.Data.GetDataPresent(typeof(List<Playlist>)))
+            {
+                ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(List<Playlist>)));
             }
             else if (e.Data.GetDataPresent(typeof(DirectoryItem)))
             {
@@ -35,6 +43,10 @@ namespace SimpleMusicPlayer
             {
                 ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(Playlist)));
             }
+            else if (e.Data.GetDataPresent(typeof(Song)))
+            {
+                ((MainViewModel)DataContext).AddSong(e.Data.GetData(typeof(Song)));
+            }
         }
 
         // private void Filetree_PreviewMouseMove(object sender, MouseEventArgs e)
@@ -46,19 +58,18 @@ namespace SimpleMusicPlayer
 
         private void Playlistview_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            // TODO allow multiple playlists to be added at once
-
             ListView tv = (ListView)sender;
             if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
-                DragDrop.DoDragDrop(playlistview, tv.SelectedItem, DragDropEffects.Copy);
+            {
+                List<Playlist> selectedplaylist = tv.SelectedItems.Cast<Playlist>().ToList();
+                DragDrop.DoDragDrop(playlistview, selectedplaylist, DragDropEffects.Copy);
+            }
         }
 
         private void Currentplaylistview_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Delete && e.IsDown == true)
-            {
-                ((MainViewModel)DataContext).RemoveSong(currentplaylistview.SelectedItems);
-            }
+            if (e.Key == Key.Delete && e.IsDown == true)            
+                ((MainViewModel)DataContext).RemoveSong(currentplaylistview.SelectedItems);            
         }
 
         private void Currentplaylistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -75,17 +86,19 @@ namespace SimpleMusicPlayer
         private void Filesongslistview_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             ListView tv = (ListView)sender;
-            if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
-                DragDrop.DoDragDrop(filesongslistview, tv.SelectedItem, DragDropEffects.Copy);
-        }
+            if (tv?.SelectedItems != null && e.LeftButton == MouseButtonState.Pressed)
+            {
+                List<Song> selectedsongs = tv.SelectedItems.Cast<Song>().ToList();
+                DragDrop.DoDragDrop(filesongslistview, selectedsongs, DragDropEffects.Copy);
+            }
+        }        
 
         private void Filesongslistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ListView tv = (ListView)sender;
             Song song = tv.SelectedItem as Song;
             ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
-            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song.Path);
-        }
-        
+            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path);
+        }    
     }
 }

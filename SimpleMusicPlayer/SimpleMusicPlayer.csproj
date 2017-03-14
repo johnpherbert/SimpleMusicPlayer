@@ -87,6 +87,7 @@
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\PlayEnabledConverter.cs" />
     <Compile Include="Converters\PlayPauseVisiblityConverter.cs" />
+    <Compile Include="CustomControls\ListViewMultiSelect.cs" />
     <Compile Include="Models\FileTree\DirectoryItem.cs" />
     <Compile Include="Models\FileTree\FileItem.cs" />
     <Compile Include="Models\FileTree\Item.cs" />
