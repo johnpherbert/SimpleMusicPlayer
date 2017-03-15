@@ -266,10 +266,16 @@
                           ItemsSource="{Binding Path=Items}" />
                 </ScrollViewer-->
 
-                <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"             
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="22"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="filterbox" Grid.Row="0" HorizontalAlignment="Stretch" Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="22" />
+                    <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"             
                           PreviewMouseMove="Filesongslistview_PreviewMouseMove"
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
-                          ItemsSource="{Binding SongItems}"
+                          ItemsSource="{Binding SongView}"                                                      
                           MouseDoubleClick="Filesongslistview_MouseDoubleClick">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -286,12 +292,12 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </custom:ListViewMultiSelect>
+                </Grid>
+                <!--StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                    <Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</Button>
+                    <Button Width="50" Command="{Binding RemoveSongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItems}">-</Button>
 
-                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
-                    <!--Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</>
-                    <Button Width="50" Command="{Binding RemoveSongCommand}" CommandParameter="{Binding ElementName=currentplaylistview, Path=SelectedItems}">-</Button-->
-
-                </StackPanel>
+                </StackPanel-->
 
 
 

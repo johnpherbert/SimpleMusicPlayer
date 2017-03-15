@@ -10,6 +10,7 @@ using SimpleMusicPlayer.Models.FileTree;
 using System.IO;
 using SimpleMusicPlayer.Models;
 using System.ComponentModel;
+using System.Windows.Data;
 
 namespace SimpleMusicPlayer.Services
 {
@@ -144,7 +145,7 @@ namespace SimpleMusicPlayer.Services
             Volume = 20f;
 
             PlayListIndex = 0;
-            IsPlayingSong = false;
+            IsPlayingSong = false;        
 
             if (WasapiOut.IsSupportedOnCurrentPlatform)
                 SoundOut = new WasapiOut();

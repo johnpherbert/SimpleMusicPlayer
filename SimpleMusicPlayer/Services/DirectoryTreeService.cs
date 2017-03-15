@@ -63,8 +63,8 @@ namespace SimpleMusicPlayer.Services
                         {
                             Name = file.Name,
                             Path = file.FullName,
-                            Info =  new SongInfo() { SongTitle = file.Name, Album = string.Empty, Artist = string.Empty }
-                            // Info = MusicTagReaderService.ReadSong(file.FullName)
+                            // Info =  new SongInfo() { SongTitle = file.Name, Album = string.Empty, Artist = string.Empty }
+                            Info = MusicTagReaderService.ReadSong(file.FullName)
                         };
 
                         items.Add(item);
@@ -73,15 +73,6 @@ namespace SimpleMusicPlayer.Services
             }
 
             return items;
-        }
-
-        public static async Task<ObservableCollection<Item>> UpdateSongInfoAsync()
-        {
-            ObservableCollection<Item> returndirs = new ObservableCollection<Item>();
-
-
-
-            return returndirs;
         }
 
         public static async Task<ObservableCollection<Item>> ReadDirectoriesAsync(IEnumerable paths)

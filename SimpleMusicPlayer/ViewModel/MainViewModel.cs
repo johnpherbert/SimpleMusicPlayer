@@ -16,6 +16,7 @@ using GalaSoft.MvvmLight.Ioc;
 using System.Windows.Forms;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace SimpleMusicPlayer.ViewModel
 {
@@ -41,9 +42,26 @@ namespace SimpleMusicPlayer.ViewModel
 
         public ObservableCollection<Song> SongItems { get; set; }
 
+        public CollectionView SongView { get; set; }
+
         private Settings MusicPlayerSettings { get; set; }
 
         public string PlaylistName { get; set; }
+
+        private string filterstring;
+        public string FilterString
+        {
+            get
+            {
+                return filterstring;
+            }
+            set
+            {
+                filterstring = value;
+                RaisePropertyChanged("FilterString");
+                SongView.Refresh();
+            }
+        }
 
         public ICommand OpenSettingsCommand { get; private set; }
 
@@ -66,7 +84,6 @@ namespace SimpleMusicPlayer.ViewModel
         public ICommand CreatePlayListCommand { get; private set; }
 
         public ICommand DeletePlaylistCommand { get; private set; }
-
 
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
@@ -97,7 +114,7 @@ namespace SimpleMusicPlayer.ViewModel
 
             // Load Music Player Settings
             MusicPlayerSettings = new Settings();
-            MusicPlayerSettings.Load();
+            MusicPlayerSettings.Load();            
 
             // Load the inital directories based on the settings
             LoadInitalDirectories(MusicPlayerSettings.MusicFolders);
@@ -197,17 +214,37 @@ namespace SimpleMusicPlayer.ViewModel
             // Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
 
             SongItems = await DirectoryTreeService.ReadSongsAsync(paths);
+
+            SongView = (CollectionView)CollectionViewSource.GetDefaultView(SongItems);
+
+            SongView.Filter = CustomerFilter;            
+
             // RaisePropertyChanged("Items");
+            RaisePropertyChanged("SongView");
             RaisePropertyChanged("SongItems");
         }
 
-        public async void UpdateSongInfo(IEnumerable paths)
+        public bool CustomerFilter(object songitem)
         {
-            // Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
+            bool returnval = false;
+            Song song = songitem as Song;
 
-            SongItems = await DirectoryTreeService.ReadSongsAsync(paths);
-            // RaisePropertyChanged("Items");
-            RaisePropertyChanged("SongItems");
+            if (!string.IsNullOrEmpty(FilterString))
+            {                
+                if(song.Info.SongTitle.IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
+                   song.Info.Album.IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
+                   song.Info.Artist.IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
+                {
+                    returnval = true;
+                }
+            }
+            else
+            {
+                returnval = true;
+            }
+
+            //Return members whose Orders have not been filled
+            return returnval;
         }
 
         /// Add all children from the folder.  Allows you to load a entire collection.

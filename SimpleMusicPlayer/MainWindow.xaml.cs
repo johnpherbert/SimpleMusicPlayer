@@ -1,10 +1,13 @@
 ﻿using SimpleMusicPlayer.Models;
 using SimpleMusicPlayer.Models.FileTree;
 using SimpleMusicPlayer.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace SimpleMusicPlayer
@@ -98,7 +101,30 @@ namespace SimpleMusicPlayer
             ListView tv = (ListView)sender;
             Song song = tv.SelectedItem as Song;
             ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
-            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path);
-        }    
+            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path);            
+        }
+
+        private bool UserFilter(object item)
+        {
+            bool returnval = false;
+
+            if(!string.IsNullOrEmpty(filterbox.Text))
+            {
+                string filter = filterbox.Text;
+                returnval = true;
+
+                Song song = item as Song;
+
+                returnval = song.Info.Artist.Contains(filter) || song.Info.SongTitle.Contains(filter) || song.Info.Album.Contains(filter);
+            }
+
+            return returnval;
+        }
+
+        private void Filterbox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
+            // CollectionViewSource.GetDefaultView(filesongslistview.ItemsSource).Refresh();
+        }
     }
 }
