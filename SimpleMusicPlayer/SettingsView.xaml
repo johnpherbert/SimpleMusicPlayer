@@ -19,21 +19,31 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height=".2*" />
-            <RowDefinition Height=".6*" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height=".8*" />
             <RowDefinition Height=".2*"/>
         </Grid.RowDefinitions>
 
-        <Label Grid.Column="0">Settings</Label>
+        <Label Grid.Column="0" Height="25">Settings</Label>
 
         <ListView x:Name="musicfolderlistview" Grid.Row="1" 
                   ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
                   ItemsSource="{Binding Path=TempPlayerSettings.MusicFolders}" >
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn CellTemplate="{StaticResource MusicFolderTemplate}" />
-                </GridView>
-            </ListView.View>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBox Height="22" HorizontalAlignment="Stretch" Margin="5" VerticalAlignment="Center" Grid.Column="0" Text="{Binding Path=Path, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Height="20" Width="30" Command="{Binding SearchPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">...</Button>
+                        <Button Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Height="20" Width="30" Command="{Binding RemoveMusicPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">-</Button>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
         </ListView>
 
         <Grid Grid.Row="2">
