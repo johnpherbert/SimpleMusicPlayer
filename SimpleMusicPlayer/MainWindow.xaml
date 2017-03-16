@@ -94,12 +94,11 @@
                 </ListView>
                 
                 <custom:ListViewMultiSelect x:Name="playlistview" Grid.Row="1"
-                          ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
-                          PreviewMouseMove="Playlistview_PreviewMouseMove"
+                          ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"                          
                           ItemsSource="{Binding Path=PlaylistManager.Playlists}" >
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <Grid x:Name="playlistgrid" HorizontalAlignment="Stretch" Height="25">
+                            <Grid x:Name="playlistgrid" HorizontalAlignment="Stretch" Height="25" PreviewMouseMove="Playlistview_PreviewMouseMove">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width=".9*" />
                                     <ColumnDefinition Width=".1*" />
@@ -272,14 +271,13 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBox x:Name="filterbox" Grid.Row="0" HorizontalAlignment="Stretch" Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="22" />
-                    <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"             
-                          PreviewMouseMove="Filesongslistview_PreviewMouseMove"
+                    <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"                                       
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
                           ItemsSource="{Binding SongView}"                                                      
                           MouseDoubleClick="Filesongslistview_MouseDoubleClick">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <Grid HorizontalAlignment="Stretch">
+                            <Grid HorizontalAlignment="Stretch" PreviewMouseMove="Filesongslistview_PreviewMouseMove">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width=".5*" />
                                     <ColumnDefinition Width=".2*" />

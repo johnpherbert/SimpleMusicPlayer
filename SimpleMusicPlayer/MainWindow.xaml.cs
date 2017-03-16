@@ -52,17 +52,11 @@ namespace SimpleMusicPlayer
             }
         }
 
-        // private void Filetree_PreviewMouseMove(object sender, MouseEventArgs e)
-        // {
-        //     TreeView tv = (TreeView)sender;
-        //     if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
-        //         DragDrop.DoDragDrop(filetree, tv.SelectedItem, DragDropEffects.Copy);
-        // }
-
         private void Playlistview_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            ListView tv = (ListView)sender;
-            if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed)
+            ListView tv = playlistview;
+
+            if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed && e.Source.GetType() != typeof(Button))
             {
                 List<Playlist> selectedplaylist = tv.SelectedItems.Cast<Playlist>().ToList();
                 DragDrop.DoDragDrop(playlistview, selectedplaylist, DragDropEffects.Copy);
@@ -87,8 +81,9 @@ namespace SimpleMusicPlayer
         }
 
         private void Filesongslistview_PreviewMouseMove(object sender, MouseEventArgs e)
-        {
-            ListView tv = (ListView)sender;
+        { 
+            ListView tv = filesongslistview;
+
             if (tv?.SelectedItems != null && e.LeftButton == MouseButtonState.Pressed)
             {
                 List<Song> selectedsongs = tv.SelectedItems.Cast<Song>().ToList();
@@ -102,29 +97,6 @@ namespace SimpleMusicPlayer
             Song song = tv.SelectedItem as Song;
             ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
             ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path);            
-        }
-
-        private bool UserFilter(object item)
-        {
-            bool returnval = false;
-
-            if(!string.IsNullOrEmpty(filterbox.Text))
-            {
-                string filter = filterbox.Text;
-                returnval = true;
-
-                Song song = item as Song;
-
-                returnval = song.Info.Artist.Contains(filter) || song.Info.SongTitle.Contains(filter) || song.Info.Album.Contains(filter);
-            }
-
-            return returnval;
-        }
-
-        private void Filterbox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            // ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
-            // CollectionViewSource.GetDefaultView(filesongslistview.ItemsSource).Refresh();
         }
     }
 }
