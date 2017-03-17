@@ -34,13 +34,11 @@ namespace SimpleMusicPlayer.ViewModel
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
+        public MusicLibraryManager MusicLibraryManager { get; set; } = new MusicLibraryManager();
+
         public PlaylistManager PlaylistManager { get; set; } = new PlaylistManager();
 
         public MusicPlayerService MusicPlayer { get; set; } = new MusicPlayerService();
-
-        public ObservableCollection<Item> Items { get; set; }
-
-        public ObservableCollection<Song> SongItems { get; set; }
 
         public CollectionView SongView { get; set; }
 
@@ -110,11 +108,12 @@ namespace SimpleMusicPlayer.ViewModel
             AddSongCommand = new RelayCommand<object>((songs) => AddSong(songs));
             RemoveSongCommand = new RelayCommand<IList>((playlist) => RemoveSong(playlist));
 
-            Items = new ObservableCollection<Item>();
-
             // Load Music Player Settings
             MusicPlayerSettings = new Settings();
-            MusicPlayerSettings.Load();            
+            MusicPlayerSettings.Load();
+
+            // Load the MusicLibrary
+            LoadMusicLibrary();            
 
             // Load the inital directories based on the settings
             LoadInitalDirectories(MusicPlayerSettings.MusicFolders);
@@ -209,19 +208,28 @@ namespace SimpleMusicPlayer.ViewModel
             }
         }
 
-        public async void LoadInitalDirectories(IEnumerable paths)
+        public void LoadMusicLibrary()
         {
-            // Items = await DirectoryTreeService.ReadDirectoriesAsync(paths);
-
-            SongItems = await DirectoryTreeService.ReadSongsAsync(paths);
-
-            SongView = (CollectionView)CollectionViewSource.GetDefaultView(SongItems);
-
-            SongView.Filter = CustomerFilter;            
-
-            // RaisePropertyChanged("Items");
+            MusicLibraryManager.Load();
+            SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
+            SongView.Filter = CustomerFilter;
             RaisePropertyChanged("SongView");
-            RaisePropertyChanged("SongItems");
+        }
+
+        public async void LoadInitalDirectories(IEnumerable paths)
+        {            
+            // First pass to just get the songs in the player
+            MusicLibraryManager.Songs = await DirectoryTreeService.ReadSongsAsync(paths);
+            // SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);            
+            // SongView.Filter = CustomerFilter;            
+            // RaisePropertyChanged("SongView");            
+
+            // Second pass to update it with the correct ID3 tags
+            MusicLibraryManager.Songs = await MusicTagReaderService.UpdateSongInfoAsync(MusicLibraryManager.Songs);
+            // SongView.Refresh();            
+            // RaisePropertyChanged("SongView");
+
+            MusicLibraryManager.Save();
         }
 
         public bool CustomerFilter(object songitem)

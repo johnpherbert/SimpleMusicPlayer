@@ -13,15 +13,16 @@ namespace SimpleMusicPlayer.Services
 {
     public class DirectoryTreeService
     {
-
-        public static async Task<ObservableCollection<Song>> ReadSongsAsync(IEnumerable paths)
+        public async static Task<ObservableCollection<Song>> ReadSongsAsync(IEnumerable paths)
         {
             ObservableCollection<Song> returnsongs = new ObservableCollection<Song>();
 
             foreach (DirectoryItem path in paths)
             {
                 ObservableCollection<Song> temp = new ObservableCollection<Song>();
+                // ObservableCollection<Song> tempsongs = Task.Factory.StartNew(() => GetSongs(path.Path));
                 var tempsongs = await Task.Run(() => GetSongs(path.Path)).ConfigureAwait(false);
+                // var tempsongs = GetSongs(path.Path);
 
                 foreach(Song s in tempsongs)                
                     returnsongs.Add(s);
@@ -63,8 +64,8 @@ namespace SimpleMusicPlayer.Services
                         {
                             Name = file.Name,
                             Path = file.FullName,
-                            // Info =  new SongInfo() { SongTitle = file.Name, Album = string.Empty, Artist = string.Empty }
-                            Info = MusicTagReaderService.ReadSong(file.FullName)
+                            Info =  new SongInfo() { SongTitle = file.Name, Album = string.Empty, Artist = string.Empty }
+                            // Info = MusicTagReaderService.ReadSong(file.FullName)
                         };
 
                         items.Add(item);

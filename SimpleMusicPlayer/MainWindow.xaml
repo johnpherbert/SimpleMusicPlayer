@@ -283,10 +283,10 @@
                                     <ColumnDefinition Width=".2*" />
                                     <ColumnDefinition Width=".3*" />
                                 </Grid.ColumnDefinitions>
-                                <Label MinWidth="100" Grid.Column="0" Margin="5,5,10,5" Content="{Binding Path=Info.SongTitle}" />
-                                <Label MinWidth="50" Grid.Column="2" Margin="0,5,10,5" Content="{Binding Path=Info.Artist}" />
-                                <Label MinWidth="100" Grid.Column="1" Margin="0,5,10,5" Content="{Binding Path=Info.Album}" />
-                            </Grid>
+                                    <Label Grid.Column="0" Margin="5,5,5,5" Content="{Binding Path=Info.SongTitle}" />
+                                    <Label Grid.Column="1" Margin="0,5,5,5" Content="{Binding Path=Info.Album}" />
+                                    <Label Grid.Column="2" Margin="0,5,20,5" HorizontalAlignment="Right" Content="{Binding Path=Info.Artist}" />
+                                </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </custom:ListViewMultiSelect>

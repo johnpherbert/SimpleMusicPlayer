@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="SettingsView" Height="400" Width="700">
     <Window.Resources>
-        <DataTemplate x:Key="MusicFolderTemplate"> 
+        <DataTemplate x:Key="MusicFolderTemplate">
             <StackPanel Orientation="Horizontal">
                 <TextBox Height="22" Width="500" Text="{Binding Path=Path , Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Button VerticalAlignment="Center" Margin="20,0,0,0" Height="20" Width="20" Command="{Binding DataContext.SearchPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">...</Button>
@@ -39,8 +39,8 @@
                         </Grid.ColumnDefinitions>
                         
                         <TextBox Height="22" HorizontalAlignment="Stretch" Margin="5" VerticalAlignment="Center" Grid.Column="0" Text="{Binding Path=Path, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <Button Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Height="20" Width="30" Command="{Binding SearchPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">...</Button>
-                        <Button Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Height="20" Width="30" Command="{Binding RemoveMusicPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">-</Button>
+                        <Button Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Height="20" Width="30" Command="{Binding DataContext.SearchPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">...</Button>
+                        <Button Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Height="20" Width="30" Command="{Binding DataContext.RemoveMusicPathCommand, ElementName=musicfolderlistview}" CommandParameter="{Binding}">-</Button>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

@@ -25,8 +25,7 @@ namespace SimpleMusicPlayer.Models
             }
         }
 
-        private SongInfo info;
-        [ScriptIgnore]
+        private SongInfo info;        
         public SongInfo Info
         {
             get { return info; }

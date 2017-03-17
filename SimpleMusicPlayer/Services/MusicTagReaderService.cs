@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using SimpleMusicPlayer.Models;
+using System.Collections.ObjectModel;
 
 namespace SimpleMusicPlayer.Services
 {
@@ -35,6 +36,159 @@ namespace SimpleMusicPlayer.Services
 
     public class MusicTagReaderService
     {
+        public async static Task<ObservableCollection<Song>> UpdateSongInfoAsync(ObservableCollection<Song> songs)
+        {
+            ObservableCollection<Song> returnsongs = songs;
+
+            foreach (Song s in songs)
+            {
+                s.Info = await Task.Run(() => ReadSong(s.Path)).ConfigureAwait(false);
+            }
+
+            return returnsongs;
+        }
+
+
+        public static SongInfo ReadSong(string path)
+        {
+            // string test = @"E:\Music\Ace of Base\Flowers\17 - Cruel Summer.mp3";
+            // path = test;
+
+            bool containsid3v2 = false;
+
+            // This is a simple ID3v1 Tag Reader
+            SongInfo newInfo = new SongInfo();
+            try
+            {
+                using (FileStream id3v2stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+                {
+                    id3v2stream.Seek(0, SeekOrigin.Begin);
+                    byte[] id3v2check = new byte[3];
+                    id3v2stream.Read(id3v2check, 0, 3);
+
+                    if (Encoding.UTF8.GetString(id3v2check) == "ID3")
+                    {
+                        // TODO Should compare filelength to size given for better checking
+                        containsid3v2 = true;
+
+                        byte[] id3v2version = new byte[2];
+                        id3v2stream.Read(id3v2version, 0, 2);
+                        int major = id3v2version[0];
+                        int minor = id3v2version[1];
+
+                        // a - Unsynchronisation - Bit 7 indicates wheter or not unsynchronisation is used
+                        // b - Extended Header - Bit 6 indicates whether or not the header is followed by a extended header.
+                        // c - Experimental indictor - Bit 5 should be used as an experimental indicator
+                        byte[] id3v2flag = new byte[1];
+                        id3v2stream.Read(id3v2flag, 0, 1);
+
+                        byte[] id3v2size = new byte[4];
+                        id3v2stream.Read(id3v2size, 0, 4);
+
+                        //if (BitConverter.IsLittleEndian)
+                        //Array.Reverse(id3v2size);
+
+                        // We AND all the bytes with 0111 1111 1111 1111 because the size in id3v2 the first bit is ignored so we make sure that value is 0
+                        int firstbyte = id3v2size[0] & 0x7F;
+                        int secondbyte = id3v2size[1] & 0x7F;
+                        int thirdbyte = id3v2size[2] & 0x7F;
+                        int fourthbyte = id3v2size[3] & 0x7F;
+
+                        int test = fourthbyte << 1;
+
+                        // Since we are ignoreing the first bit it gets a bit weird but not to bad.
+                        // We just need to slide each byte to their corisponding spots - 1
+                        int tagLength = fourthbyte + (thirdbyte << 7) + (secondbyte << 14) + (firstbyte << 21);
+
+                        while (id3v2stream.Position < tagLength)
+                        {
+                            ID3v2Frame frame = ReadID3v2Frame(id3v2stream);
+                            switch (frame.FrameID)
+                            {
+                                // Lead Performer
+                                case "TPE1":
+                                    newInfo.Artist = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    break;
+                                // Band
+                                case "TPE2":
+                                    break;
+                                // Conductor
+                                case "TPE3":
+                                    break;
+                                // Remixed by
+                                case "TPE4":
+                                    break;
+                                // Title/songname
+                                case "TIT2":
+                                    newInfo.SongTitle = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    break;
+                                // Title Year
+                                case "TYER":
+                                    newInfo.Year = BitConverter.ToInt32(frame.Data, 0);
+                                    break;
+                                // Title Album
+                                case "TALB":
+                                    newInfo.Album = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                if (!containsid3v2)
+                {
+                    // Logic to read a ID3v1 tag
+                    using (FileStream id3v1stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+                    {
+                        id3v1stream.Seek(-128, SeekOrigin.End);
+                        // fs.Seek(fs.Length - 128, SeekOrigin.Begin);
+                        // char c = (char)fs.ReadByte();
+                        byte[] id3v1check = new byte[3];
+                        id3v1stream.Read(id3v1check, 0, 3);
+
+                        if (Encoding.UTF8.GetString(id3v1check) == "TAG")
+                        {
+                            byte[] songtitle = new byte[30];
+                            id3v1stream.Read(songtitle, 0, 30);
+                            newInfo.SongTitle = Encoding.UTF8.GetString(songtitle).Trim(new char[] { ' ', '\0' });
+
+                            byte[] artist = new byte[30];
+                            id3v1stream.Read(artist, 0, 30);
+                            newInfo.Artist = Encoding.UTF8.GetString(artist).Trim(new char[] { ' ', '\0' });
+
+                            byte[] album = new byte[30];
+                            id3v1stream.Read(album, 0, 30);
+                            newInfo.Album = Encoding.UTF8.GetString(album).Trim(new char[] { ' ', '\0' });
+
+                            byte[] year = new byte[4];
+                            id3v1stream.Read(year, 0, 4);
+                            int formatyear = BitConverter.ToInt32(year, 0);
+
+                            byte[] comment = new byte[30];
+                            id3v1stream.Read(comment, 0, 30);
+                            newInfo.Comment = Encoding.UTF8.GetString(comment);
+
+                            byte[] genre = new byte[1];
+                            id3v1stream.Read(genre, 0, 1);
+                            newInfo.Genre = Encoding.UTF8.GetString(genre);
+                        }
+                        else
+                        {
+                            newInfo.SongTitle = path;
+                            newInfo.Artist = string.Empty;
+                            newInfo.Album = string.Empty;
+                        }
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+
+            return newInfo;
+        }
+
         private static ID3v2Frame ReadID3v2Frame(FileStream stream)
         {
             ID3v2Frame readframe = new ID3v2Frame();
@@ -89,140 +243,6 @@ namespace SimpleMusicPlayer.Services
             }
 
             return readframe;
-        }
-
-        public static SongInfo ReadSong(string path)
-        {
-            // string test = @"E:\Music\Ace of Base\Flowers\17 - Cruel Summer.mp3";
-            // path = test;
-
-            bool containsid3v2 = false;            
-
-            // This is a simple ID3v1 Tag Reader
-            SongInfo newInfo = new SongInfo();
-
-            using (FileStream id3v2stream = new FileStream(path, FileMode.Open, FileAccess.Read))
-            {
-                id3v2stream.Seek(0, SeekOrigin.Begin);
-                byte[] id3v2check = new byte[3];
-                id3v2stream.Read(id3v2check, 0, 3);
-
-                if (Encoding.UTF8.GetString(id3v2check) == "ID3")
-                {
-                    // TODO Should compare filelength to size given for better checking
-                    containsid3v2 = true;
-
-                    byte[] id3v2version = new byte[2];
-                    id3v2stream.Read(id3v2version, 0, 2);
-                    int major = id3v2version[0];
-                    int minor = id3v2version[1];
-
-                    // a - Unsynchronisation - Bit 7 indicates wheter or not unsynchronisation is used
-                    // b - Extended Header - Bit 6 indicates whether or not the header is followed by a extended header.
-                    // c - Experimental indictor - Bit 5 should be used as an experimental indicator
-                    byte[] id3v2flag = new byte[1];
-                    id3v2stream.Read(id3v2flag, 0, 1);
-
-                    byte[] id3v2size = new byte[4];
-                    id3v2stream.Read(id3v2size, 0, 4);
-
-                    //if (BitConverter.IsLittleEndian)
-                        //Array.Reverse(id3v2size);
-
-                    // We AND all the bytes with 0111 1111 1111 1111 because the size in id3v2 the first bit is ignored so we make sure that value is 0
-                    int firstbyte = id3v2size[0] & 0x7F;
-                    int secondbyte = id3v2size[1] & 0x7F;
-                    int thirdbyte = id3v2size[2] & 0x7F;
-                    int fourthbyte = id3v2size[3] & 0x7F;
-
-                    int test = fourthbyte << 1;
-
-                    // Since we are ignoreing the first bit it gets a bit weird but not to bad.
-                    // We just need to slide each byte to their corisponding spots - 1
-                    int tagLength = fourthbyte + (thirdbyte << 7) + (secondbyte << 14) + (firstbyte << 21);                    
-
-                    while (id3v2stream.Position < tagLength)
-                    {
-                        ID3v2Frame frame = ReadID3v2Frame(id3v2stream);
-                        switch(frame.FrameID)
-                        {
-                            // Lead Performer
-                            case "TPE1":
-                                newInfo.Artist = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
-                                break;
-                            // Band
-                            case "TPE2":
-                                break;
-                            // Conductor
-                            case "TPE3":
-                                break;
-                            // Remixed by
-                            case "TPE4":
-                                break;
-                            // Title/songname
-                            case "TIT2":
-                                newInfo.SongTitle = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
-                                break;
-                            // Title Year
-                            case "TYER":
-                                newInfo.Year = BitConverter.ToInt32(frame.Data, 0);
-                                break;
-                            // Title Album
-                            case "TALB":
-                                newInfo.Album = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
-                                break;
-                        }
-                    }
-                }
-            }
-
-            if (!containsid3v2)
-            {
-                // Logic to read a ID3v1 tag
-                using (FileStream id3v1stream = new FileStream(path, FileMode.Open, FileAccess.Read))
-                {                   
-                    id3v1stream.Seek(-128, SeekOrigin.End);
-                    // fs.Seek(fs.Length - 128, SeekOrigin.Begin);
-                    // char c = (char)fs.ReadByte();
-                    byte[] id3v1check = new byte[3];
-                    id3v1stream.Read(id3v1check, 0, 3);
-
-                    if (Encoding.UTF8.GetString(id3v1check) == "TAG")
-                    {
-                        byte[] songtitle = new byte[30];
-                        id3v1stream.Read(songtitle, 0, 30);
-                        newInfo.SongTitle = Encoding.UTF8.GetString(songtitle).Trim(new char[] { ' ', '\0' });
-
-                        byte[] artist = new byte[30];
-                        id3v1stream.Read(artist, 0, 30);
-                        newInfo.Artist = Encoding.UTF8.GetString(artist).Trim(new char[] { ' ', '\0' });
-
-                        byte[] album = new byte[30];
-                        id3v1stream.Read(album, 0, 30);
-                        newInfo.Album = Encoding.UTF8.GetString(album).Trim(new char[] { ' ', '\0' });
-
-                        byte[] year = new byte[4];
-                        id3v1stream.Read(year, 0, 4);
-                        int formatyear = BitConverter.ToInt32(year, 0);
-
-                        byte[] comment = new byte[30];
-                        id3v1stream.Read(comment, 0, 30);
-                        newInfo.Comment = Encoding.UTF8.GetString(comment);
-
-                        byte[] genre = new byte[1];
-                        id3v1stream.Read(genre, 0, 1);
-                        newInfo.Genre = Encoding.UTF8.GetString(genre);
-                    }
-                    else
-                    {
-                        newInfo.SongTitle = path;
-                        newInfo.Artist = string.Empty;
-                        newInfo.Album = string.Empty;
-                    }
-                }
-            }
-
-            return newInfo;
         }        
     }
 

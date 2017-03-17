@@ -91,6 +91,7 @@
     <Compile Include="Models\FileTree\DirectoryItem.cs" />
     <Compile Include="Models\FileTree\FileItem.cs" />
     <Compile Include="Models\FileTree\Item.cs" />
+    <Compile Include="Models\MusicLibraryManager.cs" />
     <Compile Include="Models\Playlist.cs" />
     <Compile Include="Models\PlaylistManager.cs" />
     <Compile Include="Models\Settings.cs" />
