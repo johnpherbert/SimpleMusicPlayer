@@ -46,6 +46,21 @@ namespace SimpleMusicPlayer.ViewModel
 
         public string PlaylistName { get; set; }
 
+        private MusicLibraryStatus librarystatus;
+        public MusicLibraryStatus LibraryStatus
+        {
+            get
+            {
+                return librarystatus;
+            }
+
+            set
+            {
+                librarystatus = value;
+                RaisePropertyChanged("LibraryStatus");
+            }
+        }
+
         private string filterstring;
         public string FilterString
         {
@@ -83,6 +98,8 @@ namespace SimpleMusicPlayer.ViewModel
 
         public ICommand DeletePlaylistCommand { get; private set; }
 
+        public ICommand EditTagCommand { get; private set; }
+
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
@@ -108,6 +125,8 @@ namespace SimpleMusicPlayer.ViewModel
             AddSongCommand = new RelayCommand<object>((songs) => AddSong(songs));
             RemoveSongCommand = new RelayCommand<IList>((playlist) => RemoveSong(playlist));
 
+            EditTagCommand = new RelayCommand<IList>((songs) => OpenTagWindow(songs));
+
             // Load Music Player Settings
             MusicPlayerSettings = new Settings();
             MusicPlayerSettings.Load();
@@ -123,8 +142,7 @@ namespace SimpleMusicPlayer.ViewModel
 
         public void CreatePlaylist(System.Windows.Controls.ListView playlistview)
         {
-            Playlist createpl = new Playlist();
-            createpl.Name = "New Playlist";
+            Playlist createpl = new Playlist() { Name = "New Playlist" };
 
             foreach (Song s in playlistview.Items)
                 createpl.Songs.Add(s);
@@ -208,28 +226,54 @@ namespace SimpleMusicPlayer.ViewModel
             }
         }
 
+        public void OpenTagWindow(IList songs)
+        {
+            var tagvm = SimpleIoc.Default.GetInstance<TagViewModel>();
+            tagvm.InitalizeTagView(songs);
+
+            var tagv = new TagView()
+            {
+                DataContext = tagvm
+            };
+
+            tagv.ShowDialog();
+        }
+
         public void LoadMusicLibrary()
         {
+            // Load the songs we already know about
             MusicLibraryManager.Load();
             SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
             SongView.Filter = CustomerFilter;
             RaisePropertyChanged("SongView");
+            LibraryStatus = MusicLibraryStatus.DONE;
         }
 
         public async void LoadInitalDirectories(IEnumerable paths)
-        {            
+        {
+            // We now check for real if those songs exist.
+            LibraryStatus = MusicLibraryStatus.READING_DIRECTORY;
             // First pass to just get the songs in the player
             MusicLibraryManager.Songs = await DirectoryTreeService.ReadSongsAsync(paths);
+            SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
+            SongView.Filter = CustomerFilter;
+            SongView.Refresh();
+            RaisePropertyChanged("SongView");
+
             // SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);            
             // SongView.Filter = CustomerFilter;            
             // RaisePropertyChanged("SongView");            
 
+                LibraryStatus = MusicLibraryStatus.UPDATING_TAGS;
             // Second pass to update it with the correct ID3 tags
-            MusicLibraryManager.Songs = await MusicTagReaderService.UpdateSongInfoAsync(MusicLibraryManager.Songs);
+                MusicLibraryManager.Songs = await MusicTagReaderService.UpdateSongInfoAsync(MusicLibraryManager.Songs);
+                SongView.Refresh();
+                RaisePropertyChanged("SongView");
             // SongView.Refresh();            
             // RaisePropertyChanged("SongView");
 
             MusicLibraryManager.Save();
+            LibraryStatus = MusicLibraryStatus.DONE;
         }
 
         public bool CustomerFilter(object songitem)
@@ -238,10 +282,10 @@ namespace SimpleMusicPlayer.ViewModel
             Song song = songitem as Song;
 
             if (!string.IsNullOrEmpty(FilterString))
-            {                
-                if(song.Info.SongTitle.IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
-                   song.Info.Album.IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
-                   song.Info.Artist.IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
+            {
+                if (song.Info.SongTitle.Replace("-","").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
+                   song.Info.Album.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
+                   song.Info.Artist.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
                 {
                     returnval = true;
                 }

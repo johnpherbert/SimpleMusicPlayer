@@ -4,6 +4,13 @@ using System.Web.Script.Serialization;
 
 namespace SimpleMusicPlayer.Models
 {
+    public enum MusicLibraryStatus
+    {
+        READING_DIRECTORY,
+        UPDATING_TAGS,
+        DONE
+    }
+
     public class MusicLibraryManager
     {
         private const string DEFAULT_FILENAME = "library.json";

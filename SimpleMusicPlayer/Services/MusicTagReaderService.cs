@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using SimpleMusicPlayer.Models;
 using System.Collections.ObjectModel;
+using CSCore.Tags.ID3;
 
 namespace SimpleMusicPlayer.Services
 {
@@ -32,6 +33,11 @@ namespace SimpleMusicPlayer.Services
         /// </summary>
         public byte[] Data;
 
+        /// <summary>
+        /// The type of unicode it is
+        /// </summary>
+        public int unicode;
+
     }
 
     public class MusicTagReaderService
@@ -42,10 +48,32 @@ namespace SimpleMusicPlayer.Services
 
             foreach (Song s in songs)
             {
-                s.Info = await Task.Run(() => ReadSong(s.Path)).ConfigureAwait(false);
+                s.Info = await Task.Run(() => ReadSongInfo(s)).ConfigureAwait(false);
             }
 
             return returnsongs;
+        }
+
+        public static SongInfo ReadSongInfo(Song song)
+        {
+            SongInfo returnInfo = song.Info;
+            ID3v2 id3v2info = ID3v2.FromFile(song.Path);
+            if (id3v2info != null)
+            {
+                returnInfo.Album = id3v2info.QuickInfo.Album;
+                returnInfo.Artist = id3v2info.QuickInfo.Artist;
+                returnInfo.SongTitle = id3v2info.QuickInfo.Title;
+            }
+
+            ID3v1 id3v1info = ID3v1.FromFile(song.Path);
+            if(id3v1info != null)
+            {
+                returnInfo.Album = id3v1info.Album;
+                returnInfo.Artist = id3v1info.Artist;
+                returnInfo.SongTitle = id3v1info.Title;
+            }
+
+            return returnInfo;
         }
 
 
@@ -53,6 +81,14 @@ namespace SimpleMusicPlayer.Services
         {
             // string test = @"E:\Music\Ace of Base\Flowers\17 - Cruel Summer.mp3";
             // path = test;
+            if(path.Contains("Dog Shit"))
+            {
+
+            }
+
+            ID3v2 test2 = ID3v2.FromFile(path);
+            ID3v1 test3 = ID3v1.FromFile(path);
+            
 
             bool containsid3v2 = false;
 
@@ -104,10 +140,15 @@ namespace SimpleMusicPlayer.Services
                         {
                             ID3v2Frame frame = ReadID3v2Frame(id3v2stream);
                             switch (frame.FrameID)
-                            {
+                            {                                
                                 // Lead Performer
                                 case "TPE1":
+                                    newInfo.Artist = Encoding.ASCII.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    newInfo.Artist = Encoding.UTF32.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    newInfo.Artist = Encoding.UTF7.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
                                     newInfo.Artist = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    newInfo.Artist = Encoding.Unicode.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    newInfo.Artist = Encoding.BigEndianUnicode.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
                                     break;
                                 // Band
                                 case "TPE2":
@@ -120,15 +161,16 @@ namespace SimpleMusicPlayer.Services
                                     break;
                                 // Title/songname
                                 case "TIT2":
-                                    newInfo.SongTitle = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                    newInfo.SongTitle = Encoding.ASCII.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
                                     break;
                                 // Title Year
                                 case "TYER":
                                     newInfo.Year = BitConverter.ToInt32(frame.Data, 0);
                                     break;
                                 // Title Album
-                                case "TALB":
-                                    newInfo.Album = Encoding.UTF8.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
+                                case "TALB":                                    
+                                    newInfo.Album = Encoding.ASCII.GetString(frame.Data).Trim(new char[] { ' ', '\0' });                                    
+                                    // newInfo.Album = Encoding.BigEndianUnicode.GetString(frame.Data).Trim(new char[] { ' ', '\0' });
                                     break;
                             }
                         }
@@ -189,6 +231,52 @@ namespace SimpleMusicPlayer.Services
             return newInfo;
         }
 
+        public static string Utf16ToUtf8(string utf16String)
+        {
+            /**************************************************************
+             * Every .NET string will store text with the UTF16 encoding, *
+             * known as Encoding.Unicode. Other encodings may exist as    *
+             * Byte-Array or incorrectly stored with the UTF16 encoding.  *
+             *                                                            *
+             * UTF8 = 1 bytes per char                                    *
+             *    ["100" for the ansi 'd']                                *
+             *    ["206" and "186" for the russian 'κ']                   *
+             *                                                            *
+             * UTF16 = 2 bytes per char                                   *
+             *    ["100, 0" for the ansi 'd']                             *
+             *    ["186, 3" for the russian 'κ']                          *
+             *                                                            *
+             * UTF8 inside UTF16                                          *
+             *    ["100, 0" for the ansi 'd']                             *
+             *    ["206, 0" and "186, 0" for the russian 'κ']             *
+             *                                                            *
+             * We can use the convert encoding function to convert an     *
+             * UTF16 Byte-Array to an UTF8 Byte-Array. When we use UTF8   *
+             * encoding to string method now, we will get a UTF16 string. *
+             *                                                            *
+             * So we imitate UTF16 by filling the second byte of a char   *
+             * with a 0 byte (binary 0) while creating the string.        *
+             **************************************************************/
+
+            // Storage for the UTF8 string
+            string utf8String = String.Empty;
+
+            // Get UTF16 bytes and convert UTF16 bytes to UTF8 bytes
+            byte[] utf16Bytes = Encoding.Unicode.GetBytes(utf16String);
+            byte[] utf8Bytes = Encoding.Convert(Encoding.Unicode, Encoding.UTF8, utf16Bytes);
+
+            // Fill UTF8 bytes inside UTF8 string
+            for (int i = 0; i < utf8Bytes.Length; i++)
+            {
+                // Because char always saves 2 bytes, fill char with 0
+                byte[] utf8Container = new byte[2] { utf8Bytes[i], 0 };
+                utf8String += BitConverter.ToChar(utf8Container, 0);
+            }
+
+            // Return UTF8
+            return utf8String;
+        }
+
         private static ID3v2Frame ReadID3v2Frame(FileStream stream)
         {
             ID3v2Frame readframe = new ID3v2Frame();
@@ -212,10 +300,13 @@ namespace SimpleMusicPlayer.Services
             stream.Read(flags, 0, 2);
             readframe.Flags = flags;
 
+            // byte[] unicode = new byte[1];
+            // stream.Read(unicode, 0, 1);
+            // readframe.unicode = BitConverter.ToInt16(unicode, 0);            
+
             byte[] data = new byte[readframe.Size];
             stream.Read(data, 0, readframe.Size);
-            readframe.Data = data;
-            string test = Encoding.UTF8.GetString(data).Trim(new char[] { ' ', '\0' });
+            readframe.Data = data;;
 
             switch(readframe.FrameID)
             {

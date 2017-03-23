@@ -72,7 +72,7 @@ namespace SimpleMusicPlayer
         private void Currentplaylistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             Song s = currentplaylistview.SelectedItem as Song;
-            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(s.Path);
+            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(s.Path, false);
         }
 
         private void Playlisttextbox_LostFocus(object sender, RoutedEventArgs e)
@@ -96,7 +96,7 @@ namespace SimpleMusicPlayer
             ListView tv = (ListView)sender;
             Song song = tv.SelectedItem as Song;
             ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
-            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path);            
+            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path, false);            
         }
     }
 }

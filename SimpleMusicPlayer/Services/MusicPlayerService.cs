@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CSCore;
 using CSCore.SoundOut;
 using System.Collections.ObjectModel;
-using SimpleMusicPlayer.Models.FileTree;
 using System.IO;
 using SimpleMusicPlayer.Models;
 using System.ComponentModel;
-using System.Windows.Data;
 
 namespace SimpleMusicPlayer.Services
 {
@@ -135,13 +129,25 @@ namespace SimpleMusicPlayer.Services
             }
         }
 
+        private bool randomize;
+        public bool Randomzie
+        {
+            get { return randomize; }
+
+            set
+            {
+                randomize = value;
+                NotifyProperyChanged("Randomize");
+            }
+        }
+
         public ISoundOut SoundOut;
         public IWaveSource WaveSource;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public MusicPlayerService()
-        {
+        {            
             Volume = 20f;
 
             PlayListIndex = 0;
@@ -170,14 +176,14 @@ namespace SimpleMusicPlayer.Services
                     PlayListIndex = 0;
 
                 if (PlayListIndex < CurrentPlaylist.Count)
-                    PlayNewSong(CurrentPlaylist[PlayListIndex].Path);
+                    PlayNewSong(CurrentPlaylist[PlayListIndex].Path, true);
             }
 
             // User may have stopped it so we reset to song over.
             HowPlayerStopped = PlayerStopped.SongOver;
         }
 
-        public void PlayNewSong(string path = "")
+        public void PlayNewSong(string path = "", bool random = false)
         {
             // If we have selected a diffrent song we should play it.                
             if (CurrentPlaylist.Count > 0)
@@ -187,8 +193,14 @@ namespace SimpleMusicPlayer.Services
                 if (string.IsNullOrEmpty(path))
                     songtoplay = CurrentPlaylist[0].Path;
 
-                PlayListIndex = GetPlaylistIndexFromPath(songtoplay);
+                if (Randomzie && random)
+                {                    
+                    Random rand = new Random();
+                    int newindex = rand.Next(0, CurrentPlaylist.Count);
+                    songtoplay = CurrentPlaylist[newindex].Path;
+                }
 
+                PlayListIndex = GetPlaylistIndexFromPath(songtoplay);
 
                 // If the song was playing stop it before we start a new song.
                 if (SoundOut.PlaybackState == PlaybackState.Playing || SoundOut.PlaybackState == PlaybackState.Paused)
@@ -226,7 +238,7 @@ namespace SimpleMusicPlayer.Services
             }
             else
             {
-                PlayNewSong(path);
+                PlayNewSong(path, false);
             }
         }
 
@@ -236,7 +248,7 @@ namespace SimpleMusicPlayer.Services
             {
                 // We dont want to adjust the index until we play the song otherwise we will have problems with pausing
                 int tempindex = PlayListIndex + 1;
-                PlayNewSong(CurrentPlaylist?[tempindex].Path);
+                PlayNewSong(CurrentPlaylist?[tempindex].Path, true);
             }
         }
 
@@ -246,13 +258,8 @@ namespace SimpleMusicPlayer.Services
             {
                 // We dont want to adjust the index until we play the song otherwise we will have problems with pausing
                 int tempindex = PlayListIndex - 1;
-                PlayNewSong(CurrentPlaylist?[tempindex].Path);
+                PlayNewSong(CurrentPlaylist?[tempindex].Path, false);
             }
-        }
-
-        public void PlayRandomSong()
-        {
-
         }
 
         public void ResumeSong()

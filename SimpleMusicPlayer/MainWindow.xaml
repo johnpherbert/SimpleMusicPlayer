@@ -44,6 +44,7 @@
         <Converters:BooleanToFontWeightConverter x:Key="booltofontweight" />
         <Converters:PlayPauseVisiblityConverter x:Key="playpausevisibility" />
         <Converters:PlayEnabledConverter x:Key="playenabled" />
+        <Converters:LibraryStatusConverter x:Key="librarystatus" />
     </Window.Resources>
     <DockPanel>
         <Menu Height="20" DockPanel.Dock="Top">
@@ -61,6 +62,10 @@
                 <ColumnDefinition Width=".35*" />
                 <ColumnDefinition Width=".65*" />
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="30"/>
+            </Grid.RowDefinitions>
 
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
@@ -92,7 +97,7 @@
                         </GridView>
                     </ListView.View-->
                 </ListView>
-                
+
                 <custom:ListViewMultiSelect x:Name="playlistview" Grid.Row="1"
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"                          
                           ItemsSource="{Binding Path=PlaylistManager.Playlists}" >
@@ -124,7 +129,6 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="100" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="30"/>
                 </Grid.RowDefinitions>
 
                 <StackPanel Orientation="Vertical" Grid.Row="0">
@@ -247,6 +251,9 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
+                        <CheckBox x:Name="randomcheckbox" IsChecked="{Binding MusicPlayer.Randomzie}">
+                        </CheckBox>
+                        <Button Height="50" Width="50" Command="{Binding EditTagCommand}" CommandParameter="{Binding Path=SelectedItems, ElementName=filesongslistview}" Content="Edit" />
                         <!--#endregion-->
                     </StackPanel>
                     <Slider HorizontalAlignment="Center" VerticalAlignment="Center" Width="300" Minimum="0" Maximum="100" Value="{Binding Path=MusicPlayer.Volume}" />
@@ -275,21 +282,21 @@
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
                           ItemsSource="{Binding SongView}"                                                      
                           MouseDoubleClick="Filesongslistview_MouseDoubleClick">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid HorizontalAlignment="Stretch" PreviewMouseMove="Filesongslistview_PreviewMouseMove">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width=".5*" />
-                                    <ColumnDefinition Width=".2*" />
-                                    <ColumnDefinition Width=".3*" />
-                                </Grid.ColumnDefinitions>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid HorizontalAlignment="Stretch" PreviewMouseMove="Filesongslistview_PreviewMouseMove">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width=".5*" />
+                                        <ColumnDefinition Width=".2*" />
+                                        <ColumnDefinition Width=".3*" />
+                                    </Grid.ColumnDefinitions>
                                     <Label Grid.Column="0" Margin="5,5,5,5" Content="{Binding Path=Info.SongTitle}" />
                                     <Label Grid.Column="1" Margin="0,5,5,5" Content="{Binding Path=Info.Album}" />
                                     <Label Grid.Column="2" Margin="0,5,20,5" HorizontalAlignment="Right" Content="{Binding Path=Info.Artist}" />
                                 </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </custom:ListViewMultiSelect>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </custom:ListViewMultiSelect>
                 </Grid>
                 <!--StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                     <Button Width="50" Command="{Binding AddSongCommand}" CommandParameter="{Binding ElementName=filetree, Path=SelectedItem}">+</Button>
@@ -303,6 +310,10 @@
                     <TextBox x:Name="playlistname" Height="20" Width="200" Text="{Binding PlaylistName}" />
                     <Button Width="100" Command="{Binding CreatePlayListCommand}" CommandParameter="{Binding ElementName=currentplaylistview}">Make Playlist</Button>
                 </StackPanel-->
+            </Grid>
+
+            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Height="30">
+                <Label x:Name="librarystatus" Content="{Binding LibraryStatus, Converter={StaticResource librarystatus}}" />
             </Grid>
         </Grid>
     </DockPanel>

@@ -44,6 +44,7 @@ namespace SimpleMusicPlayer.ViewModel
 
             SimpleIoc.Default.Register<MainViewModel>();
             SimpleIoc.Default.Register<SettingsViewModel>();
+            SimpleIoc.Default.Register<TagViewModel>();
         }
 
         public MainViewModel Main
@@ -59,6 +60,14 @@ namespace SimpleMusicPlayer.ViewModel
             get
             {
                 return ServiceLocator.Current.GetInstance<SettingsViewModel>();
+            }
+        }
+
+        public TagViewModel Tag
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<TagViewModel>();
             }
         }
 
