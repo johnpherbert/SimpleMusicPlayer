@@ -7,6 +7,7 @@ using System.IO;
 using SimpleMusicPlayer.Models;
 using System.Collections.ObjectModel;
 using CSCore.Tags.ID3;
+using TagLib;
 
 namespace SimpleMusicPlayer.Services
 {
@@ -57,21 +58,30 @@ namespace SimpleMusicPlayer.Services
         public static SongInfo ReadSongInfo(Song song)
         {
             SongInfo returnInfo = song.Info;
-            ID3v2 id3v2info = ID3v2.FromFile(song.Path);
-            if (id3v2info != null)
-            {
-                returnInfo.Album = id3v2info.QuickInfo.Album;
-                returnInfo.Artist = id3v2info.QuickInfo.Artist;
-                returnInfo.SongTitle = id3v2info.QuickInfo.Title;
-            }
 
-            ID3v1 id3v1info = ID3v1.FromFile(song.Path);
-            if(id3v1info != null)
+            var filesong = TagLib.File.Create(song.Path);
+            if (filesong != null)
             {
-                returnInfo.Album = id3v1info.Album;
-                returnInfo.Artist = id3v1info.Artist;
-                returnInfo.SongTitle = id3v1info.Title;
+                returnInfo.Album = filesong.Tag.Album;
+                returnInfo.Artist = filesong.Tag.JoinedPerformers;
+                returnInfo.SongTitle = filesong.Tag.Title;
             }
+            
+            // ID3v2 id3v2info = ID3v2.FromFile(song.Path);
+            // if (id3v2info != null)
+            // {
+            //     returnInfo.Album = id3v2info.QuickInfo.Album;
+            //     returnInfo.Artist = id3v2info.QuickInfo.Artist;
+            //     returnInfo.SongTitle = id3v2info.QuickInfo.Title;
+            // }
+            // 
+            // ID3v1 id3v1info = ID3v1.FromFile(song.Path);
+            // if(id3v1info != null)
+            // {
+            //     returnInfo.Album = id3v1info.Album;
+            //     returnInfo.Artist = id3v1info.Artist;
+            //     returnInfo.SongTitle = id3v1info.Title;
+            // }
 
             return returnInfo;
         }

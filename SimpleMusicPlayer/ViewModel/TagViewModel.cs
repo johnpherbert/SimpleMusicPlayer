@@ -14,6 +14,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 
 using CSCore.Tags.ID3;
+using TagLib;
 
 namespace SimpleMusicPlayer.ViewModel
 {
@@ -48,11 +49,11 @@ namespace SimpleMusicPlayer.ViewModel
         public void InitalizeTagView(IList songs)
         {
             TempID3Songs = songs;            
-
+            
             if (songs.Count > 0)
-            {
-                Song id3song = TempID3Songs[0] as Song;
-                
+            {                
+                Song id3song = TempID3Songs[0] as Song;                
+
                 if (songs.Count == 1)
                 {
                     SongTitle = id3song.Info.SongTitle;
@@ -68,7 +69,27 @@ namespace SimpleMusicPlayer.ViewModel
         }
 
         public void SaveSettings(Window tagwindow)
-        {          
+        {
+            foreach (Song song in TempID3Songs)
+            {
+                var songfile = File.Create(song.Path);
+
+                if (CanEditArtist)
+                    songfile.Tag.Title = SongTitle;
+
+                if (CanEditArtist)
+                {
+                    string[] artists = songfile.Tag.Performers;
+                    artists[0] = Artist;
+                    songfile.Tag.Performers = artists;
+                }
+
+                if (CanEditAlbum)
+                    songfile.Tag.Album = Album;
+
+                songfile.Save();
+            }
+
             Saved = true;            
             tagwindow?.Close();                       
         }
