@@ -35,6 +35,17 @@ namespace SimpleMusicPlayer.Models
                 NotifyProperyChanged("Info");
             }
         }
+        
+        private bool liked;
+        public bool Liked
+        {
+            get { return liked; }
+            set
+            {
+                liked = value;
+                NotifyProperyChanged("Liked");
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

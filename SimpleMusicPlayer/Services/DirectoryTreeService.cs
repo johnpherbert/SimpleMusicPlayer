@@ -13,7 +13,7 @@ namespace SimpleMusicPlayer.Services
 {
     public class DirectoryTreeService
     {
-        public async static Task<ObservableCollection<Song>> ReadSongsAsync(IEnumerable paths)
+        public async static Task<ObservableCollection<Song>> ReadSongsAsync(IEnumerable paths, IList songs)
         {
             ObservableCollection<Song> returnsongs = new ObservableCollection<Song>();
 
@@ -24,8 +24,20 @@ namespace SimpleMusicPlayer.Services
                 var tempsongs = await Task.Run(() => GetSongs(path.Path)).ConfigureAwait(false);
                 // var tempsongs = GetSongs(path.Path);
 
-                foreach(Song s in tempsongs)                
-                    returnsongs.Add(s);
+                foreach (Song s in tempsongs)
+                {                    
+                    Song samesong = s;
+                    foreach (Song s2 in songs)
+                    {
+                        if (s.Path == s2.Path)
+                        {
+                            samesong = s2;
+                            break;
+                        }
+                    }
+
+                    returnsongs.Add(samesong);
+                }
                 
                 // if (Directory.Exists(path.Path))
                 // {

@@ -9,6 +9,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
+using static SimpleMusicPlayer.CustomControls.ListViewMultiSelect;
 
 namespace SimpleMusicPlayer
 {
@@ -56,10 +58,10 @@ namespace SimpleMusicPlayer
         {
             ListView tv = playlistview;
 
-            if (tv?.SelectedItem != null && e.LeftButton == MouseButtonState.Pressed && e.Source.GetType() != typeof(Button))
+            if (tv?.SelectedItems != null && e.LeftButton == MouseButtonState.Pressed)
             {
-                List<Playlist> selectedplaylist = tv.SelectedItems.Cast<Playlist>().ToList();
-                DragDrop.DoDragDrop(playlistview, selectedplaylist, DragDropEffects.Copy);
+                List<Playlist> selectedplaylists = tv.SelectedItems.Cast<Playlist>().ToList();
+                DragDrop.DoDragDrop(playlistview, selectedplaylists, DragDropEffects.Copy);
             }
         }
 
@@ -71,8 +73,15 @@ namespace SimpleMusicPlayer
 
         private void Currentplaylistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Song s = currentplaylistview.SelectedItem as Song;
-            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(s.Path, false);
+            // Make sure we are not double clicking the scrollviewer
+            var src = VisualTreeHelper.GetParent((DependencyObject)e.OriginalSource);
+            var srcType = src.GetType();
+
+            if (srcType != typeof(System.Windows.Controls.Primitives.RepeatButton) && srcType != typeof(System.Windows.Controls.Primitives.Thumb))
+            {
+                Song s = currentplaylistview.SelectedItem as Song;
+                ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(s.Path, false);
+            }
         }
 
         private void Playlisttextbox_LostFocus(object sender, RoutedEventArgs e)
@@ -81,22 +90,32 @@ namespace SimpleMusicPlayer
         }
 
         private void Filesongslistview_PreviewMouseMove(object sender, MouseEventArgs e)
-        { 
+        {
+            // If its a checkbox just ignore
+            var srcType = e.Source.GetType();            
+
             ListView tv = filesongslistview;
 
-            if (tv?.SelectedItems != null && e.LeftButton == MouseButtonState.Pressed)
+            if (tv?.SelectedItems != null && e.LeftButton == MouseButtonState.Pressed && srcType != typeof(CheckBox))
             {
                 List<Song> selectedsongs = tv.SelectedItems.Cast<Song>().ToList();
                 DragDrop.DoDragDrop(filesongslistview, selectedsongs, DragDropEffects.Copy);
             }
-        }        
+        }
 
         private void Filesongslistview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            ListView tv = (ListView)sender;
-            Song song = tv.SelectedItem as Song;
-            ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
-            ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path, false);            
+            // Make sure we are not double clicking the scrollviewer
+            var src = VisualTreeHelper.GetParent((DependencyObject)e.OriginalSource);
+            var srcType = src.GetType();
+
+            if (srcType != typeof(System.Windows.Controls.Primitives.RepeatButton) && srcType != typeof(System.Windows.Controls.Primitives.Thumb))
+            {
+                ListView tv = (ListView)sender;
+                Song song = tv.SelectedItem as Song;
+                ((MainViewModel)DataContext).AddSong(tv.SelectedItem);
+                ((MainViewModel)DataContext).MusicPlayer.PlayNewSong(song?.Path, false);
+            }           
         }
     }
 }

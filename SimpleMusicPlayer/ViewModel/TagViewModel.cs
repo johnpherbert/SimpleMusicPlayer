@@ -34,6 +34,8 @@ namespace SimpleMusicPlayer.ViewModel
 
         public string SongTitle { get; set; }
 
+        public bool IsLiked { get; set; }
+
         public bool CanEditSongTitle { get; set; } = false;
 
         public ICommand SaveSettingsCommand { get; private set; }
@@ -51,14 +53,19 @@ namespace SimpleMusicPlayer.ViewModel
             TempID3Songs = songs;            
             
             if (songs.Count > 0)
-            {                
-                Song id3song = TempID3Songs[0] as Song;                
+            {
+                CanEditSongTitle = false;
+
+                Song id3song = TempID3Songs[0] as Song;
+
+                IsLiked = id3song.Liked;
 
                 if (songs.Count == 1)
                 {
                     SongTitle = id3song.Info.SongTitle;
-                    CanEditSongTitle = true;
+                    CanEditSongTitle = true;                    
                 }
+                
 
                 Artist = id3song.Info.Artist;
                 CanEditArtist = true;
@@ -74,7 +81,7 @@ namespace SimpleMusicPlayer.ViewModel
             {
                 var songfile = File.Create(song.Path);
 
-                if (CanEditArtist)
+                if (CanEditSongTitle)
                     songfile.Tag.Title = SongTitle;
 
                 if (CanEditArtist)
@@ -86,6 +93,8 @@ namespace SimpleMusicPlayer.ViewModel
 
                 if (CanEditAlbum)
                     songfile.Tag.Album = Album;
+
+                song.Liked = IsLiked;
 
                 songfile.Save();
             }

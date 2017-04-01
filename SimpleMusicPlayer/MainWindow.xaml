@@ -103,13 +103,15 @@
                           ItemsSource="{Binding Path=PlaylistManager.Playlists}" >
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <Grid x:Name="playlistgrid" HorizontalAlignment="Stretch" Height="25" PreviewMouseMove="Playlistview_PreviewMouseMove">
+                            <!-- Need to have transparent background so drag drop works on empty space -->
+                            <Grid x:Name="playlistgrid" HorizontalAlignment="Stretch" Height="25" PreviewMouseMove="Playlistview_PreviewMouseMove" Background="Transparent">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width=".9*" />
+                                    <ColumnDefinition Width=".7*" />
+                                    <ColumnDefinition Width=".2*" />
                                     <ColumnDefinition Width=".1*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="playlisttextbox" Margin="30,0,5,0" VerticalAlignment="Center" Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" LostFocus="Playlisttextbox_LostFocus" />
-                                <Button x:Name="removeplaylistbutton" Grid.Column="1" Height="20"
+                                <TextBox x:Name="playlisttextbox" Margin="0,0,5,0" VerticalAlignment="Center" Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" LostFocus="Playlisttextbox_LostFocus" />
+                                <Button x:Name="removeplaylistbutton" Grid.Column="2" Height="20"
                                         HorizontalAlignment="Stretch" VerticalAlignment="Center"
                                         Content="-"
                                         Command="{Binding DataContext.DeletePlaylistCommand, ElementName=playlistview}"
@@ -278,21 +280,25 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBox x:Name="filterbox" Grid.Row="0" HorizontalAlignment="Stretch" Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="22" />
-                    <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"                                       
-                          ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
-                          ItemsSource="{Binding SongView}"                                                      
-                          MouseDoubleClick="Filesongslistview_MouseDoubleClick">
+                    <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"        
+                                                ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"                                               
+                                                ItemsSource="{Binding SongView}"
+                                                MouseDoubleClick="Filesongslistview_MouseDoubleClick">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid HorizontalAlignment="Stretch" PreviewMouseMove="Filesongslistview_PreviewMouseMove">
+                                <!-- Need to have transparent background so drag drop works on empty space -->
+                                <Grid HorizontalAlignment="Stretch" Background="Transparent" PreviewMouseMove="Filesongslistview_PreviewMouseMove">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width=".5*" />
+                                        <ColumnDefinition Width=".4*" />
                                         <ColumnDefinition Width=".2*" />
                                         <ColumnDefinition Width=".3*" />
+                                        <ColumnDefinition Width=".1*" />
                                     </Grid.ColumnDefinitions>
                                     <Label Grid.Column="0" Margin="5,5,5,5" Content="{Binding Path=Info.SongTitle}" />
-                                    <Label Grid.Column="1" Margin="0,5,5,5" Content="{Binding Path=Info.Album}" />
-                                    <Label Grid.Column="2" Margin="0,5,20,5" HorizontalAlignment="Right" Content="{Binding Path=Info.Artist}" />
+                                    <Label Grid.Column="1" Margin="0,5,5,5" HorizontalAlignment="Right" Content="{Binding Path=Info.Artist}" />
+                                    <Label Grid.Column="2" Margin="0,5,5,5" HorizontalAlignment="Right" Content="{Binding Path=Info.Album}" />
+                                    <CheckBox Grid.Column="4" IsChecked="{Binding Path=Liked}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    </CheckBox>
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

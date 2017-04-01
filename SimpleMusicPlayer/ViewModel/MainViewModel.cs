@@ -237,6 +237,15 @@ namespace SimpleMusicPlayer.ViewModel
             };
 
             tagv.ShowDialog();
+
+            if (tagvm.Saved)
+            {
+                foreach (Song s in tagvm.TempID3Songs)
+                {
+                    if (MusicLibraryManager.Songs.Contains(s))
+                        MusicLibraryManager.Songs[MusicLibraryManager.Songs.IndexOf(s)].Liked = s.Liked;
+                }
+            }
         }
 
         public void LoadMusicLibrary()
@@ -254,23 +263,17 @@ namespace SimpleMusicPlayer.ViewModel
             // We now check for real if those songs exist.
             LibraryStatus = MusicLibraryStatus.READING_DIRECTORY;
             // First pass to just get the songs in the player
-            MusicLibraryManager.Songs = await DirectoryTreeService.ReadSongsAsync(paths);
+            MusicLibraryManager.Songs = await DirectoryTreeService.ReadSongsAsync(paths, MusicLibraryManager.Songs);
             SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
             SongView.Filter = CustomerFilter;
             SongView.Refresh();
-            RaisePropertyChanged("SongView");
+            RaisePropertyChanged("SongView");        
 
-            // SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);            
-            // SongView.Filter = CustomerFilter;            
-            // RaisePropertyChanged("SongView");            
-
-                LibraryStatus = MusicLibraryStatus.UPDATING_TAGS;
+            LibraryStatus = MusicLibraryStatus.UPDATING_TAGS;
             // Second pass to update it with the correct ID3 tags
-                MusicLibraryManager.Songs = await MusicTagReaderService.UpdateSongInfoAsync(MusicLibraryManager.Songs);
-                SongView.Refresh();
-                RaisePropertyChanged("SongView");
-            // SongView.Refresh();            
-            // RaisePropertyChanged("SongView");
+            MusicLibraryManager.Songs = await MusicTagReaderService.UpdateSongInfoAsync(MusicLibraryManager.Songs);
+            SongView.Refresh();
+            RaisePropertyChanged("SongView");
 
             MusicLibraryManager.Save();
             LibraryStatus = MusicLibraryStatus.DONE;
@@ -283,11 +286,20 @@ namespace SimpleMusicPlayer.ViewModel
 
             if (!string.IsNullOrEmpty(FilterString))
             {
-                if (song.Info.SongTitle.Replace("-","").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
-                   song.Info.Album.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
-                   song.Info.Artist.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
+                if(FilterString == "***")
+                {
+                    if (song.Liked)
+                        return true;
+                }
+                else if (song?.Info?.SongTitle?.Replace("-","").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
+                   song?.Info?.Album?.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
+                   song?.Info?.Artist?.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
                 {
                     returnval = true;
+                }
+                else
+                {
+                    returnval = false;
                 }
             }
             else
@@ -325,6 +337,8 @@ namespace SimpleMusicPlayer.ViewModel
 
         private void Exit()
         {
+            MusicLibraryManager.Save();
+
             MusicPlayer.Cleanup();
             MusicPlayer.StopSong();
             // window?.Close();
