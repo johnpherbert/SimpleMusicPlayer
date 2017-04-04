@@ -82,17 +82,24 @@ namespace SimpleMusicPlayer.ViewModel
                 var songfile = File.Create(song.Path);
 
                 if (CanEditSongTitle)
+                {
                     songfile.Tag.Title = SongTitle;
+                    song.Info.SongTitle = SongTitle;
+                }
 
                 if (CanEditArtist)
                 {
                     string[] artists = songfile.Tag.Performers;
                     artists[0] = Artist;
                     songfile.Tag.Performers = artists;
+                    song.Info.Artist = Artist;
                 }
 
                 if (CanEditAlbum)
+                {
                     songfile.Tag.Album = Album;
+                    song.Info.Album = Album;
+                }
 
                 song.Liked = IsLiked;
 

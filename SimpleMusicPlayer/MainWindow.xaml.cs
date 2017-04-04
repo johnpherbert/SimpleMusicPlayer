@@ -56,9 +56,10 @@ namespace SimpleMusicPlayer
 
         private void Playlistview_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            ListView tv = playlistview;
+            ListView tv = playlistview;                        
+            var srcType = e.Source.GetType();
 
-            if (tv?.SelectedItems != null && e.LeftButton == MouseButtonState.Pressed)
+            if (tv?.SelectedItems != null && e.LeftButton == MouseButtonState.Pressed && srcType != typeof(TextBox))
             {
                 List<Playlist> selectedplaylists = tv.SelectedItems.Cast<Playlist>().ToList();
                 DragDrop.DoDragDrop(playlistview, selectedplaylists, DragDropEffects.Copy);

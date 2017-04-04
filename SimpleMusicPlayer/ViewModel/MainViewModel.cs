@@ -2,10 +2,7 @@ using GalaSoft.MvvmLight;
 using SimpleMusicPlayer.Models.FileTree;
 using System.Collections.ObjectModel;
 using System;
-using System.Linq;
 using SimpleMusicPlayer.Services;
-using System.IO;
-using System.Threading.Tasks;
 using System.ComponentModel;
 using SimpleMusicPlayer.Models;
 using System.Collections.Generic;
@@ -13,9 +10,6 @@ using System.Collections;
 using GalaSoft.MvvmLight.Command;
 using System.Windows.Input;
 using GalaSoft.MvvmLight.Ioc;
-using System.Windows.Forms;
-using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
 
 namespace SimpleMusicPlayer.ViewModel
@@ -38,11 +32,21 @@ namespace SimpleMusicPlayer.ViewModel
 
         public PlaylistManager PlaylistManager { get; set; } = new PlaylistManager();
 
-        public MusicPlayerService MusicPlayer { get; set; } = new MusicPlayerService();
-
-        public CollectionView SongView { get; set; }
+        public MusicPlayerService MusicPlayer { get; set; } = new MusicPlayerService();        
 
         private Settings MusicPlayerSettings { get; set; }
+
+        private ICollectionView musiclibraryview;
+        public ICollectionView MusicLibraryView
+        {
+            get { return musiclibraryview; }
+        }
+
+        private ICollectionView currentplayerlistview;
+        public ICollectionView CurrentPlaylistSongs
+        {
+            get { return currentplayerlistview; }
+        }
 
         public string PlaylistName { get; set; }
 
@@ -72,10 +76,26 @@ namespace SimpleMusicPlayer.ViewModel
             {
                 filterstring = value;
                 RaisePropertyChanged("FilterString");
-                SongView.Refresh();
+                musiclibraryview.Refresh();
             }
         }
 
+        private string currentplaylistfilter;
+        public string CurrentPlaylistFilter
+        {
+            get
+            {
+                return currentplaylistfilter;
+            }
+            set
+            {
+                currentplaylistfilter = value;
+                RaisePropertyChanged("CurrentPlaylistFilter");
+                currentplayerlistview.Refresh();
+            }
+        }
+
+        #region Commands
         public ICommand OpenSettingsCommand { get; private set; }
 
         public ICommand ExitCommand { get; private set; }
@@ -100,15 +120,13 @@ namespace SimpleMusicPlayer.ViewModel
 
         public ICommand EditTagCommand { get; private set; }
 
+        #endregion
+
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
         public MainViewModel()
         {
-
-            // string path = @"E:\Music\Ace of Base\Flowers\17 - Cruel Summer.mp3";
-            // MusicTagReaderService.ReadSong(path);
-
             OpenSettingsCommand = new RelayCommand(() => OpenSettingsWindow());
             ExitCommand = new RelayCommand(() => Exit());
 
@@ -138,6 +156,14 @@ namespace SimpleMusicPlayer.ViewModel
             LoadInitalDirectories(MusicPlayerSettings.MusicFolders);
 
             PlaylistManager.Load();
+
+            currentplayerlistview = CollectionViewSource.GetDefaultView(MusicPlayer.CurrentPlaylist);
+            currentplayerlistview.Filter = PlaylistFilter;            
+            RaisePropertyChanged("CurrentPlaylistFilter");
+
+            musiclibraryview = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
+            musiclibraryview.Filter = CustomerFilter;
+            RaisePropertyChanged("MusicLibraryView");
         }
 
         public void CreatePlaylist(System.Windows.Controls.ListView playlistview)
@@ -243,7 +269,13 @@ namespace SimpleMusicPlayer.ViewModel
                 foreach (Song s in tagvm.TempID3Songs)
                 {
                     if (MusicLibraryManager.Songs.Contains(s))
+                    {
                         MusicLibraryManager.Songs[MusicLibraryManager.Songs.IndexOf(s)].Liked = s.Liked;
+                        MusicLibraryManager.Songs[MusicLibraryManager.Songs.IndexOf(s)].Info.Album = s.Info.Album;
+                        MusicLibraryManager.Songs[MusicLibraryManager.Songs.IndexOf(s)].Info.Artist = s.Info.Artist;
+                        MusicLibraryManager.Songs[MusicLibraryManager.Songs.IndexOf(s)].Info.SongTitle = s.Info.SongTitle;
+
+                    }
                 }
             }
         }
@@ -252,9 +284,9 @@ namespace SimpleMusicPlayer.ViewModel
         {
             // Load the songs we already know about
             MusicLibraryManager.Load();
-            SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
-            SongView.Filter = CustomerFilter;
-            RaisePropertyChanged("SongView");
+            // SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
+            // SongView.Filter = CustomerFilter;
+            // RaisePropertyChanged("SongView");
             LibraryStatus = MusicLibraryStatus.DONE;
         }
 
@@ -262,53 +294,78 @@ namespace SimpleMusicPlayer.ViewModel
         {
             // We now check for real if those songs exist.
             LibraryStatus = MusicLibraryStatus.READING_DIRECTORY;
+
             // First pass to just get the songs in the player
             MusicLibraryManager.Songs = await DirectoryTreeService.ReadSongsAsync(paths, MusicLibraryManager.Songs);
-            SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
-            SongView.Filter = CustomerFilter;
-            SongView.Refresh();
-            RaisePropertyChanged("SongView");        
+            // musiclibraryview = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
+            // musiclibraryview.Filter = CustomerFilter;
+            // RaisePropertyChanged("MusicLibraryView");
+            // musiclibraryview.Refresh();
+            // SongView = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
+            // SongView.Filter = CustomerFilter;
+            // SongView.Refresh();
+            // RaisePropertyChanged("SongView");
 
             LibraryStatus = MusicLibraryStatus.UPDATING_TAGS;
             // Second pass to update it with the correct ID3 tags
             MusicLibraryManager.Songs = await MusicTagReaderService.UpdateSongInfoAsync(MusicLibraryManager.Songs);
-            SongView.Refresh();
-            RaisePropertyChanged("SongView");
+            // musiclibraryview = (CollectionView)CollectionViewSource.GetDefaultView(MusicLibraryManager.Songs);
+            // musiclibraryview.Filter = CustomerFilter;
+            // RaisePropertyChanged("MusicLibraryView");
+            // musiclibraryview.Refresh();
 
             MusicLibraryManager.Save();
             LibraryStatus = MusicLibraryStatus.DONE;
         }
 
-        public bool CustomerFilter(object songitem)
+        private bool SearchFilter(Song song, string searchstring)
         {
-            bool returnval = false;
-            Song song = songitem as Song;
-
-            if (!string.IsNullOrEmpty(FilterString))
+            if (!string.IsNullOrEmpty(searchstring))
             {
-                if(FilterString == "***")
+                if (searchstring == "***")
                 {
                     if (song.Liked)
                         return true;
                 }
-                else if (song?.Info?.SongTitle?.Replace("-","").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
-                   song?.Info?.Album?.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1 ||
-                   song?.Info?.Artist?.Replace("-", "").IndexOf(FilterString.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
-                {
-                    returnval = true;
-                }
                 else
                 {
-                    returnval = false;
+                    if (song != null && song.Info != null && song.Info.SongTitle != null && song.Info.SongTitle != null &&
+                        song.Info.SongTitle.Replace("-", "").IndexOf(searchstring.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
+                    {
+                        return true;
+                    }
+
+                    if (song != null && song.Info != null && song.Info.SongTitle != null && song.Info.Artist != null &&
+                        song.Info.Artist.Replace("-", "").IndexOf(searchstring.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
+                    {
+                        return true;
+                    }
+
+                    if (song != null && song.Info != null && song.Info.SongTitle != null && song.Info.Album != null &&
+                        song.Info.Album.Replace("-", "").IndexOf(searchstring.Trim(), 0, StringComparison.OrdinalIgnoreCase) != -1)
+                    {
+                        return true;
+                    }
                 }
             }
             else
             {
-                returnval = true;
+                return true;
             }
 
-            //Return members whose Orders have not been filled
-            return returnval;
+            return false;
+        }
+
+        public bool CustomerFilter(object songitem)
+        {
+            Song song = songitem as Song;
+            return SearchFilter(song, FilterString);            
+        }
+
+        public bool PlaylistFilter(object songitem)
+        {
+            Song song = songitem as Song;
+            return SearchFilter(song, CurrentPlaylistFilter);            
         }
 
         /// Add all children from the folder.  Allows you to load a entire collection.

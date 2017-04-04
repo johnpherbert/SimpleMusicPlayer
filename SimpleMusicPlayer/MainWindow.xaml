@@ -45,6 +45,7 @@
         <Converters:PlayPauseVisiblityConverter x:Key="playpausevisibility" />
         <Converters:PlayEnabledConverter x:Key="playenabled" />
         <Converters:LibraryStatusConverter x:Key="librarystatus" />
+        <Converters:AlbumToBackgroundColorConverter x:Key="albumcolor" />
     </Window.Resources>
     <DockPanel>
         <Menu Height="20" DockPanel.Dock="Top">
@@ -69,15 +70,19 @@
 
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="20" />
                     <RowDefinition Height=".7*" />
                     <RowDefinition Height=".3*" />
                 </Grid.RowDefinitions>
-                <ListView x:Name="currentplaylistview" Grid.Row="0" Grid.Column="0"
+
+                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding CurrentPlaylistFilter, UpdateSourceTrigger=PropertyChanged}" />
+
+                <ListView x:Name="currentplaylistview" Grid.Row="1" Grid.Column="0"
                           AllowDrop="True" 
                           KeyDown="Currentplaylistview_KeyDown"                
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"
                           Drop="Currentplaylistview_Drop" 
-                          ItemsSource="{Binding MusicPlayer.CurrentPlaylist}"
+                          ItemsSource="{Binding CurrentPlaylistSongs}"
                           MouseDoubleClick="Currentplaylistview_MouseDoubleClick">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -88,6 +93,7 @@
                                 </Grid.ColumnDefinitions>
                                 <Label Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="{Binding Path=IsBeingPlayed, Converter={StaticResource booltovisbility}}">Play</Label>
                                 <TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="{Binding Path=IsBeingPlayed, Converter={StaticResource booltofontweight}}" Text="{Binding Path=Name}" />
+                                <CheckBox Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" IsChecked="{Binding Path=Liked}" />
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -98,7 +104,7 @@
                     </ListView.View-->
                 </ListView>
 
-                <custom:ListViewMultiSelect x:Name="playlistview" Grid.Row="1"
+                <custom:ListViewMultiSelect x:Name="playlistview" Grid.Row="2"
                           ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"                          
                           ItemsSource="{Binding Path=PlaylistManager.Playlists}" >
                     <ListView.ItemTemplate>
@@ -282,12 +288,14 @@
                     <TextBox x:Name="filterbox" Grid.Row="0" HorizontalAlignment="Stretch" Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="22" />
                     <custom:ListViewMultiSelect x:Name="filesongslistview" Grid.Row="1"        
                                                 ItemContainerStyle="{StaticResource ListViewItemOptionStyle}"                                               
-                                                ItemsSource="{Binding SongView}"
+                                                ItemsSource="{Binding MusicLibraryView}"
                                                 MouseDoubleClick="Filesongslistview_MouseDoubleClick">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <!-- Need to have transparent background so drag drop works on empty space -->
-                                <Grid HorizontalAlignment="Stretch" Background="Transparent" PreviewMouseMove="Filesongslistview_PreviewMouseMove">
+                                <Grid HorizontalAlignment="Stretch"
+                                      Background="{Binding Path=Info.Album, Converter={StaticResource albumcolor}}"
+                                      PreviewMouseMove="Filesongslistview_PreviewMouseMove">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width=".4*" />
                                         <ColumnDefinition Width=".2*" />
